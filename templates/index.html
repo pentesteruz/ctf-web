@@ -68,7 +68,7 @@
             <span style="color: var(--text-muted);">— bash</span>
           </div>
           <div class="quick-toolbar">
-            <div class="stage-pill" id="stage-pill">Stage {{ stage }}/10</div>
+            <div class="stage-pill" id="stage-pill">{% if stage <= 10 %}CTF 1 (Stage {{ stage }}/10){% elif stage <= 20 %}CTF 2 (Stage {{ stage - 10 }}/10){% else %}✅ Tugallandi! 🏆{% endif %}</div>
             <button class="btn-tool btn-check" id="btn-quick-check" title="Bosqichni tekshirish">
               ✅ check
             </button>
@@ -246,18 +246,33 @@
         </div>
 
         <div class="cheat-card">
-          <h4>🗺️ 10 Bosqich Xaritasi</h4>
+          <h4>🔥 CTF 2: Ilg'or Parametrlar</h4>
           <div class="cheat-cmd-list">
-            <div class="cheat-item"><span class="cheat-code">quiz1</span><span>mkdir — papkalar yaratish</span></div>
-            <div class="cheat-item"><span class="cheat-code">quiz2</span><span>touch — fayllar yaratish</span></div>
-            <div class="cheat-item"><span class="cheat-code">quiz3</span><span>echo/nano — matn yozish</span></div>
-            <div class="cheat-item"><span class="cheat-code">quiz4</span><span>grep/head/tail — log qidirish</span></div>
-            <div class="cheat-item"><span class="cheat-code">quiz5</span><span>grep — katta fayldan kalit</span></div>
-            <div class="cheat-item"><span class="cheat-code">quiz6</span><span>rm / rm -r — fayllarni o'chirish</span></div>
-            <div class="cheat-item"><span class="cheat-code">quiz7</span><span>chmod +x — ruxsat berish va ./script.sh</span></div>
-            <div class="cheat-item"><span class="cheat-code">quiz8</span><span>sudo chown — fayl egasini o'zgartirish</span></div>
-            <div class="cheat-item"><span class="cheat-code">quiz9</span><span>ls -la / cd — yashirin fayl topish</span></div>
-            <div class="cheat-item"><span class="cheat-code">quiz10</span><span>chmod +x final.sh → ./final.sh → check 🏆</span></div>
+            <div class="cheat-item"><span class="cheat-code">grep -w "BiGs0Z" file</span><span>To'liq so'z chegarasi</span></div>
+            <div class="cheat-item"><span class="cheat-code">grep -i "key" file</span><span>Registrga qaramay qidirish</span></div>
+            <div class="cheat-item"><span class="cheat-code">grep -v "DEBUG" file</span><span>Shovqinni inkor qilish</span></div>
+            <div class="cheat-item"><span class="cheat-code">grep -n "key" file</span><span>Qator raqami bilan topish</span></div>
+            <div class="cheat-item"><span class="cheat-code">find . -size 1024c</span><span>Aynan 1024 baytli fayl</span></div>
+            <div class="cheat-item"><span class="cheat-code">find . -perm 777</span><span>777 ruxsatli xavfli fayl</span></div>
+            <div class="cheat-item"><span class="cheat-code">find . -type f</span><span>Faqat oddiy fayllar</span></div>
+            <div class="cheat-item"><span class="cheat-code">chmod +r file</span><span>Faylga o'qish huquqi</span></div>
+          </div>
+        </div>
+
+        <div class="cheat-card">
+          <h4>🗺️ 20 Bosqich Xaritasi (CTF 1 & 2)</h4>
+          <div class="cheat-cmd-list">
+            <div class="cheat-item"><span class="cheat-code">quiz1-10</span><span>CTF 1: Linux Asoslari va 1-Flag</span></div>
+            <div class="cheat-item"><span class="cheat-code">quiz11</span><span>chmod — yopiq papkaga kirish</span></div>
+            <div class="cheat-item"><span class="cheat-code">quiz12</span><span>chmod — o'qib bo'lmas faylni o'qish</span></div>
+            <div class="cheat-item"><span class="cheat-code">quiz13</span><span>grep -w — mustaqil so'zni ajratish</span></div>
+            <div class="cheat-item"><span class="cheat-code">quiz14</span><span>grep -i/-v — logdagi shovqinni filtr</span></div>
+            <div class="cheat-item"><span class="cheat-code">quiz15</span><span>find -size — 1024c baytli fayl</span></div>
+            <div class="cheat-item"><span class="cheat-code">quiz16</span><span>find -perm — 777 ruxsatli fayl</span></div>
+            <div class="cheat-item"><span class="cheat-code">quiz17</span><span>find -type f — oddiy faylni topish</span></div>
+            <div class="cheat-item"><span class="cheat-code">quiz18</span><span>grep -n — qator raqamini aniqlash</span></div>
+            <div class="cheat-item"><span class="cheat-code">quiz19</span><span>find/cleanup — bo'sh fayllarni ajratish</span></div>
+            <div class="cheat-item"><span class="cheat-code">quiz20</span><span>CTF 2 Final Lockbox & 2-FLAG! 🏆</span></div>
           </div>
         </div>
 

@@ -122,15 +122,21 @@ document.addEventListener("DOMContentLoaded", () => {
       if (data.output === "__CLEAR__") {
         termOutputBuffer.innerHTML = "";
       } else if (data.output) {
-        // Color-code success/fail messages
-        const out = data.output;
-        const isSuccess = out.includes("✅") || out.includes("🎉") || out.includes("🔓");
-        const isFail    = out.includes("❌");
-        const color = isSuccess ? "#00ff88" : isFail ? "#f87171" : null;
-
-        // Output may be multi-line — render each line
+        // Output may be multi-line — render each line with tailored color
         out.split("\n").forEach(line => {
-          appendLine(line, color ? { color } : {});
+          let lineColor = null;
+          if (line.includes("💡 Maslahat")) {
+            lineColor = "#fbbf24"; // yellow hint
+          } else if (line.includes("🚨 So'nggi maslahat")) {
+            lineColor = "#fb923c"; // orange last hint
+          } else if (line.includes("⚠️ DIQQAT") || line.includes("⚠️ Noto'g'ri")) {
+            lineColor = "#f87171"; // warning red
+          } else if (line.includes("✅") || line.includes("🎉") || line.includes("🏆") || line.includes("🔓")) {
+            lineColor = "#00ff88"; // success green
+          } else if (line.includes("❌")) {
+            lineColor = "#f87171"; // error red
+          }
+          appendLine(line, lineColor ? { color: lineColor } : {});
         });
       }
 

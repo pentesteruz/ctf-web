@@ -84,7 +84,13 @@ document.addEventListener("DOMContentLoaded", async () => {
       const data = await res.json();
       const stage = data.current_stage;
       if (stagePill) {
-        stagePill.textContent = stage > 10 ? "✅ Tugallandi!" : `Stage ${stage}/10`;
+        if (stage <= 10) {
+          stagePill.textContent = `CTF 1 (Stage ${stage}/10)`;
+        } else if (stage <= 20) {
+          stagePill.textContent = `CTF 2 (Stage ${stage - 10}/10)`;
+        } else {
+          stagePill.textContent = "✅ Barchasi Tugallandi! 🏆";
+        }
       }
     } catch (err) {
       console.error("Stage sync error:", err);
@@ -112,8 +118,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       const fill = (n, item) => {
         document.getElementById(`podium-${n}-name`).textContent  = item.username;
-        document.getElementById(`podium-${n}-stage`).textContent =
-          item.current_stage > 10 ? "✅ Barcha bosqichlar" : `Stage ${item.current_stage}/10`;
+        const stageLabel = item.current_stage > 20
+          ? "✅ Barcha 20 ta bosqich"
+          : item.current_stage > 10
+            ? `CTF 2 (${item.current_stage - 10}/10)`
+            : `CTF 1 (${item.current_stage}/10)`;
+        document.getElementById(`podium-${n}-stage`).textContent = stageLabel;
         document.getElementById(`podium-${n}-flag`).textContent  =
           item.flag || `Stage ${item.current_stage}`;
       };
@@ -131,14 +141,16 @@ document.addEventListener("DOMContentLoaded", async () => {
       tbody.innerHTML = board.map((item, idx) => {
         const rank   = idx + 1;
         const medal  = rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : `#${rank}`;
-        const pct    = item.current_stage > 10 ? 100 : Math.round((item.current_stage - 1) / 10 * 100);
+        const pct    = item.current_stage > 20 ? 100 : Math.round((item.current_stage - 1) / 20 * 100);
         const color  = pct === 100 ? "linear-gradient(90deg,#00ff88,#00dc88)"
-                     : pct >= 60   ? "linear-gradient(90deg,#3b82f6,#60a5fa)"
-                     : pct >= 30   ? "linear-gradient(90deg,#f59e0b,#fbbf24)"
+                     : pct >= 50   ? "linear-gradient(90deg,#3b82f6,#60a5fa)"
+                     : pct >= 25   ? "linear-gradient(90deg,#f59e0b,#fbbf24)"
                      :               "#4a5a7a";
-        const stageStr = item.current_stage > 10
-          ? `<span style="color:var(--color-accent-green);font-weight:700;">10/10 ✅</span>`
-          : `Quiz ${item.current_stage}/10`;
+        const stageStr = item.current_stage > 20
+          ? `<span style="color:var(--color-accent-green);font-weight:700;">20/20 ✅</span>`
+          : item.current_stage > 10
+            ? `<span style="color:var(--color-accent-cyan);font-weight:600;">CTF 2: ${item.current_stage - 10}/10</span>`
+            : `CTF 1: ${item.current_stage}/10`;
         const flagStr  = item.flag
           ? `<span style="color:var(--color-accent-green);font-size:0.75rem;">${item.flag}</span>`
           : `<span style="color:var(--text-muted);">—</span>`;

@@ -172,6 +172,67 @@ def seed_student(username):
         key9 = generate_random_key("PART-")
         cursor.execute("INSERT INTO answers (username, stage, expected) VALUES (?, 9, ?)", (username, key9))
 
+    # ── CTF 2 Stages (11-20) ─────────────────────────────────
+    # Quiz 11
+    cursor.execute("SELECT expected FROM answers WHERE username = ? AND stage = 11", (username,))
+    if not cursor.fetchone():
+        k11 = generate_random_key("SEC11-")
+        cursor.execute("INSERT INTO answers (username, stage, expected) VALUES (?, 11, ?)", (username, k11))
+
+    # Quiz 12
+    cursor.execute("SELECT expected FROM answers WHERE username = ? AND stage = 12", (username,))
+    if not cursor.fetchone():
+        k12 = generate_random_key("CONF12-")
+        cursor.execute("INSERT INTO answers (username, stage, expected) VALUES (?, 12, ?)", (username, k12))
+
+    # Quiz 13
+    cursor.execute("SELECT expected FROM answers WHERE username = ? AND stage = 13", (username,))
+    if not cursor.fetchone():
+        k13 = "BiGs0Z" + generate_random_key("", length=4)
+        cursor.execute("INSERT INTO answers (username, stage, expected) VALUES (?, 13, ?)", (username, k13))
+
+    # Quiz 14
+    cursor.execute("SELECT expected FROM answers WHERE username = ? AND stage = 14", (username,))
+    if not cursor.fetchone():
+        k14 = generate_random_key("LOG14-")
+        cursor.execute("INSERT INTO answers (username, stage, expected) VALUES (?, 14, ?)", (username, k14))
+
+    # Quiz 15
+    cursor.execute("SELECT expected FROM answers WHERE username = ? AND stage = 15", (username,))
+    if not cursor.fetchone():
+        k15 = generate_random_key("SIZE15-")
+        cursor.execute("INSERT INTO answers (username, stage, expected) VALUES (?, 15, ?)", (username, k15))
+
+    # Quiz 16
+    cursor.execute("SELECT expected FROM answers WHERE username = ? AND stage = 16", (username,))
+    if not cursor.fetchone():
+        k16 = generate_random_key("PERM16-")
+        cursor.execute("INSERT INTO answers (username, stage, expected) VALUES (?, 16, ?)", (username, k16))
+
+    # Quiz 17
+    cursor.execute("SELECT expected FROM answers WHERE username = ? AND stage = 17", (username,))
+    if not cursor.fetchone():
+        k17 = generate_random_key("TYPE17-")
+        cursor.execute("INSERT INTO answers (username, stage, expected) VALUES (?, 17, ?)", (username, k17))
+
+    # Quiz 18
+    cursor.execute("SELECT expected FROM answers WHERE username = ? AND stage = 18", (username,))
+    if not cursor.fetchone():
+        k18 = generate_random_key("LINE18-")
+        cursor.execute("INSERT INTO answers (username, stage, expected) VALUES (?, 18, ?)", (username, k18))
+
+    # Quiz 19
+    cursor.execute("SELECT expected FROM answers WHERE username = ? AND stage = 19", (username,))
+    if not cursor.fetchone():
+        k19 = generate_random_key("CLEAN19-")
+        cursor.execute("INSERT INTO answers (username, stage, expected) VALUES (?, 19, ?)", (username, k19))
+
+    # Quiz 20
+    cursor.execute("SELECT expected FROM answers WHERE username = ? AND stage = 20", (username,))
+    if not cursor.fetchone():
+        k20 = generate_random_key("FINAL20-")
+        cursor.execute("INSERT INTO answers (username, stage, expected) VALUES (?, 20, ?)", (username, k20))
+
     conn.commit()
     conn.close()
 
@@ -205,6 +266,18 @@ def log_attempt(username, stage, result):
     conn.close()
 
 
+def get_stage_fail_count(username, stage):
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT COUNT(*) as cnt FROM attempts WHERE username = ? AND stage = ? AND result = 'fail'",
+        (username, stage)
+    )
+    row = cursor.fetchone()
+    conn.close()
+    return row["cnt"] if row else 0
+
+
 def update_student_stage(username, next_stage):
     conn = get_db()
     cursor = conn.cursor()
@@ -216,12 +289,23 @@ def update_student_stage(username, next_stage):
     conn.close()
 
 
-def save_student_flag(username, flag):
+def save_student_flag(username, flag, level=1):
     conn = get_db()
     cursor = conn.cursor()
+    cursor.execute("SELECT flag FROM flags WHERE username = ?", (username,))
+    row = cursor.fetchone()
+    if row and row["flag"]:
+        existing = row["flag"]
+        if flag not in existing:
+            new_flag = f"{existing} | {flag}"
+        else:
+            new_flag = existing
+    else:
+        new_flag = flag
+
     cursor.execute(
         "INSERT OR REPLACE INTO flags (username, flag) VALUES (?, ?)",
-        (username, flag)
+        (username, new_flag)
     )
     conn.commit()
     conn.close()
