@@ -143,9 +143,8 @@ def init_db():
         cursor.execute("""
             UPDATE progress
             SET ctf1_stage = CASE WHEN current_stage > 10 THEN 11 ELSE COALESCE(current_stage, 1) END,
-                ctf2_stage = CASE WHEN current_stage > 10 THEN current_stage - 10 ELSE 1 END,
-                active_ctf = CASE WHEN current_stage > 10 THEN 2 ELSE 1 END
-            WHERE ctf1_stage IS NULL OR ctf1_stage = 0;
+                ctf2_stage = CASE WHEN current_stage > 10 THEN current_stage - 10 ELSE 1 END
+            WHERE (ctf1_stage = 1 AND current_stage > 1) OR ctf1_stage IS NULL OR ctf1_stage = 0;
         """)
     except Exception:
         pass
