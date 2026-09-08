@@ -1,4 +1,5 @@
 import os
+import posixpath
 import hashlib
 import json
 import string
@@ -1153,7 +1154,7 @@ def reset_progress():
 @login_required
 def read_file():
     data = request.json or {}
-    path = data.get("path", "")
+    path = data.get("path", "").replace("\\", "/")
     username = session.get("username", "talaba1")
     fs = get_fs(username)
     if path in fs and fs[path]["type"] == "file":
@@ -1165,16 +1166,16 @@ def read_file():
 @login_required
 def save_file():
     data = request.json or {}
-    path = data.get("path", "")
+    path = data.get("path", "").replace("\\", "/")
     content = data.get("content", "")
     username = session.get("username", "talaba1")
     fs = get_fs(username)
 
-    parent_dir = os.path.dirname(path)
+    parent_dir = posixpath.dirname(path)
     if parent_dir not in fs or fs[parent_dir]["type"] != "dir":
         return jsonify({"status": "error", "message": f"Papka mavjud emas: {parent_dir}"}), 400
 
-    filename = os.path.basename(path)
+    filename = posixpath.basename(path)
     if filename not in fs[parent_dir]["children"]:
         fs[parent_dir]["children"].append(filename)
 
@@ -1496,18 +1497,19 @@ def check_quiz():
 def autocomplete_terminal():
     data = request.json or {}
     text = data.get("text", "")
-    cwd = data.get("cwd", "/home/talaba1")
+    cwd = data.get("cwd", "/home/talaba1").replace("\\", "/")
     username = session.get("username", "talaba1")
     fs = get_fs(username)
 
     def resolve_path(p):
+        p = p.replace("\\", "/")
         if p.startswith("~/"):
             p = f"/home/{username}/" + p[2:]
         elif p == "~":
             p = f"/home/{username}"
         elif not p.startswith("/"):
-            p = os.path.normpath(os.path.join(cwd, p))
-        return os.path.normpath(p)
+            p = posixpath.join(cwd, p)
+        return posixpath.normpath(p)
 
     cmds = ["ls", "cd", "mkdir", "touch", "nano", "cat", "head", "tail", "rm",
             "chmod", "chown", "check", "status", "clear", "help", "whoami", "pwd", "sudo", "find", "grep", "echo"]
@@ -1525,8 +1527,8 @@ def autocomplete_terminal():
     else:
         last_arg = "" if is_trailing_space else tokens[-1]
         if "/" in last_arg:
-            dir_part = os.path.dirname(last_arg)
-            base_prefix = os.path.basename(last_arg)
+            dir_part = posixpath.dirname(last_arg)
+            base_prefix = posixpath.basename(last_arg)
             target_dir = resolve_path(dir_part)
             prefix_to_add = dir_part + "/"
         else:
@@ -1538,7 +1540,7 @@ def autocomplete_terminal():
         if target_dir in fs and fs[target_dir]["type"] == "dir":
             for item in fs[target_dir]["children"]:
                 if item.startswith(base_prefix):
-                    item_path = os.path.normpath(os.path.join(target_dir, item))
+                    item_path = posixpath.normpath(posixpath.join(target_dir, item))
                     is_dir = fs.get(item_path, {}).get("type") == "dir"
                     suffix = "/" if is_dir else ""
                     matches.append(prefix_to_add + item + suffix)
@@ -1551,7 +1553,7 @@ def autocomplete_terminal():
 def execute_command():
     data = request.json or {}
     raw_cmd = data.get("command", "").strip()
-    cwd = data.get("cwd", "/home/talaba1")
+    cwd = data.get("cwd", "/home/talaba1").replace("\\", "/")
     username = session.get("username", "talaba1")
 
     if not raw_cmd:
@@ -1561,13 +1563,14 @@ def execute_command():
     stage = db.get_student_stage(username)
 
     def resolve_path(p):
+        p = p.replace("\\", "/")
         if p.startswith("~/"):
             p = f"/home/{username}/" + p[2:]
         elif p == "~":
             p = f"/home/{username}"
         elif not p.startswith("/"):
-            p = os.path.normpath(os.path.join(cwd, p))
-        return os.path.normpath(p)
+            p = posixpath.join(cwd, p)
+        return posixpath.normpath(p)
 
     output = ""
     parts = raw_cmd.split()
@@ -1653,7 +1656,7 @@ def execute_command():
             for item in items:
                 if not show_all and item.startswith("."):
                     continue
-                item_path = os.path.normpath(os.path.join(target_dir, item))
+                item_path = posixpath.normpath(posixpath.join(target_dir, item))
                 item_meta = fs.get(item_path, {})
                 itype = item_meta.get("type", "file")
                 iowner = item_meta.get("owner", username)
@@ -1676,9 +1679,9 @@ def execute_command():
             msgs = []
             for dirname in args:
                 target_path = resolve_path(dirname)
-                parent_dir = os.path.dirname(target_path)
+                parent_dir = posixpath.dirname(target_path)
                 if parent_dir in fs and fs[parent_dir]["type"] == "dir":
-                    base = os.path.basename(target_path)
+                    base = posixpath.basename(target_path)
                     if base not in fs[parent_dir]["children"]:
                         fs[parent_dir]["children"].append(base)
                     fs[target_path] = {"type": "dir", "owner": username, "mode": "755", "children": []}
@@ -1693,9 +1696,9 @@ def execute_command():
             msgs = []
             for fname in args:
                 target_path = resolve_path(fname)
-                parent_dir = os.path.dirname(target_path)
+                parent_dir = posixpath.dirname(target_path)
                 if parent_dir in fs and fs[parent_dir]["type"] == "dir":
-                    base = os.path.basename(target_path)
+                    base = posixpath.basename(target_path)
                     if base not in fs[parent_dir]["children"]:
                         fs[parent_dir]["children"].append(base)
                     if target_path not in fs:
@@ -1844,7 +1847,7 @@ def execute_command():
             if path_key == search_dir:
                 continue
             if path_key.startswith(search_dir + "/") or (search_dir == "/" and path_key.startswith("/")):
-                basename = os.path.basename(path_key)
+                basename = posixpath.basename(path_key)
                 itype = item_meta.get("type", "file")
                 imode = item_meta.get("mode", "644")
                 content = item_meta.get("content", "")
@@ -1909,8 +1912,8 @@ def execute_command():
                     keys_to_del = [k for k in fs if k == target_path or k.startswith(target_path + "/")]
                     for k in keys_to_del:
                         del fs[k]
-                    parent_dir = os.path.dirname(target_path)
-                    base = os.path.basename(target_path)
+                    parent_dir = posixpath.dirname(target_path)
+                    base = posixpath.basename(target_path)
                     if parent_dir in fs and base in fs[parent_dir]["children"]:
                         fs[parent_dir]["children"].remove(base)
             else:
@@ -1977,16 +1980,16 @@ def execute_command():
             is_exec = ("x" in mode or mode in ("755", "777", "111", "755", "775"))
             if is_exec:
                 script_content = fs[target_path]["content"]
-                script_dir = os.path.dirname(target_path)
+                script_dir = posixpath.dirname(target_path)
                 created_file = None
                 if "done.txt" in script_content:
-                    created_file = os.path.join(script_dir, "done.txt")
+                    created_file = posixpath.join(script_dir, "done.txt")
                     fs[created_file] = {"type": "file", "owner": username, "mode": "644", "content": "muvaffaqiyatli"}
                     if "done.txt" not in fs[script_dir]["children"]:
                         fs[script_dir]["children"].append("done.txt")
                     output = "Skript ishga tushdi!"
                 elif "result.txt" in script_content:
-                    created_file = os.path.join(script_dir, "result.txt")
+                    created_file = posixpath.join(script_dir, "result.txt")
                     fs[created_file] = {"type": "file", "owner": username, "mode": "644", "content": "Tabriklaymiz, siz oxirgi bosqichga yetdingiz!"}
                     if "result.txt" not in fs[script_dir]["children"]:
                         fs[script_dir]["children"].append("result.txt")
@@ -2009,7 +2012,7 @@ def execute_command():
             return jsonify({
                 "action": "open_editor",
                 "path": target_path,
-                "filename": os.path.basename(target_path),
+                "filename": posixpath.basename(target_path),
                 "content": content,
                 "cwd": cwd
             })
@@ -2021,9 +2024,9 @@ def execute_command():
             file_dest = raw_cmd[gt_idx + 1:].strip()
             text = echo_part.replace("echo", "", 1).strip().strip('"').strip("'")
             target_path = resolve_path(file_dest)
-            parent_dir = os.path.dirname(target_path)
+            parent_dir = posixpath.dirname(target_path)
             if parent_dir in fs:
-                base = os.path.basename(target_path)
+                base = posixpath.basename(target_path)
                 if base not in fs[parent_dir]["children"]:
                     fs[parent_dir]["children"].append(base)
                 fs[target_path] = {"type": "file", "owner": username, "mode": "644", "content": text}
