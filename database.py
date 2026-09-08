@@ -1,16 +1,66 @@
-import sqlite3
 import os
 import random
 import string
 import hashlib
 
+DATABASE_URL = os.environ.get("DATABASE_URL")
+if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+USE_POSTGRES = bool(DATABASE_URL)
 DB_PATH = os.path.join(os.path.dirname(__file__), "ctf.db")
 
 
+class DBWrapper:
+    def __init__(self):
+        self.is_pg = USE_POSTGRES
+        if self.is_pg:
+            import psycopg2
+            import psycopg2.extras
+            self.conn = psycopg2.connect(DATABASE_URL, cursor_factory=psycopg2.extras.RealDictCursor)
+        else:
+            import sqlite3
+            self.conn = sqlite3.connect(DB_PATH)
+            self.conn.row_factory = sqlite3.Row
+
+    def cursor(self):
+        return CursorWrapper(self.conn.cursor(), self.is_pg)
+
+    def commit(self):
+        self.conn.commit()
+
+    def close(self):
+        self.conn.close()
+
+
+class CursorWrapper:
+    def __init__(self, cursor, is_pg):
+        self.cursor = cursor
+        self.is_pg = is_pg
+
+    def execute(self, query, params=None):
+        sql = query
+        if self.is_pg:
+            sql = sql.replace("?", "%s")
+            if "INTEGER PRIMARY KEY AUTOINCREMENT" in sql:
+                sql = sql.replace("INTEGER PRIMARY KEY AUTOINCREMENT", "SERIAL PRIMARY KEY")
+        if params is not None:
+            return self.cursor.execute(sql, params)
+        return self.cursor.execute(sql)
+
+    def fetchone(self):
+        row = self.cursor.fetchone()
+        if row is None:
+            return None
+        return dict(row)
+
+    def fetchall(self):
+        rows = self.cursor.fetchall()
+        return [dict(r) for r in rows]
+
+
 def get_db():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
+    return DBWrapper()
 
 
 def init_db():
@@ -47,7 +97,7 @@ def init_db():
         );
     """)
 
-    # Answers table for quiz4, quiz5, quiz9
+    # Answers table
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS answers (
             username TEXT,
@@ -303,8 +353,9 @@ def save_student_flag(username, flag, level=1):
     else:
         new_flag = flag
 
+    cursor.execute("DELETE FROM flags WHERE username = ?", (username,))
     cursor.execute(
-        "INSERT OR REPLACE INTO flags (username, flag) VALUES (?, ?)",
+        "INSERT INTO flags (username, flag) VALUES (?, ?)",
         (username, new_flag)
     )
     conn.commit()
