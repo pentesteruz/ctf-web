@@ -81,6 +81,9 @@ def init_db():
         CREATE TABLE IF NOT EXISTS progress (
             username TEXT PRIMARY KEY,
             current_stage INTEGER DEFAULT 1,
+            ctf1_stage INTEGER DEFAULT 1,
+            ctf2_stage INTEGER DEFAULT 1,
+            active_ctf INTEGER DEFAULT 1,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
@@ -92,6 +95,7 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT,
             stage INTEGER,
+            ctf_id INTEGER DEFAULT 1,
             result TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
@@ -115,6 +119,36 @@ def init_db():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
     """)
+
+    # Migration for existing tables
+    try:
+        cursor.execute("ALTER TABLE progress ADD COLUMN ctf1_stage INTEGER DEFAULT 1;")
+    except Exception:
+        pass
+    try:
+        cursor.execute("ALTER TABLE progress ADD COLUMN ctf2_stage INTEGER DEFAULT 1;")
+    except Exception:
+        pass
+    try:
+        cursor.execute("ALTER TABLE progress ADD COLUMN active_ctf INTEGER DEFAULT 1;")
+    except Exception:
+        pass
+    try:
+        cursor.execute("ALTER TABLE attempts ADD COLUMN ctf_id INTEGER DEFAULT 1;")
+    except Exception:
+        pass
+
+    # Migrate any existing current_stage data
+    try:
+        cursor.execute("""
+            UPDATE progress
+            SET ctf1_stage = CASE WHEN current_stage > 10 THEN 11 ELSE COALESCE(current_stage, 1) END,
+                ctf2_stage = CASE WHEN current_stage > 10 THEN current_stage - 10 ELSE 1 END,
+                active_ctf = CASE WHEN current_stage > 10 THEN 2 ELSE 1 END
+            WHERE ctf1_stage IS NULL OR ctf1_stage = 0;
+        """)
+    except Exception:
+        pass
 
     conn.commit()
     conn.close()
@@ -199,10 +233,10 @@ def seed_student(username):
     conn = get_db()
     cursor = conn.cursor()
 
-    cursor.execute("SELECT current_stage FROM progress WHERE username = ?", (username,))
+    cursor.execute("SELECT username FROM progress WHERE username = ?", (username,))
     row = cursor.fetchone()
     if not row:
-        cursor.execute("INSERT INTO progress (username, current_stage) VALUES (?, 1)", (username,))
+        cursor.execute("INSERT INTO progress (username, current_stage, ctf1_stage, ctf2_stage, active_ctf) VALUES (?, 1, 1, 1, 1)", (username,))
 
     # Quiz 4 answer
     cursor.execute("SELECT expected FROM answers WHERE username = ? AND stage = 4", (username,))
@@ -287,13 +321,50 @@ def seed_student(username):
     conn.close()
 
 
-def get_student_stage(username):
+def get_student_ctf_status(username):
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("SELECT current_stage FROM progress WHERE username = ?", (username,))
+    cursor.execute("SELECT current_stage, ctf1_stage, ctf2_stage, active_ctf FROM progress WHERE username = ?", (username,))
     row = cursor.fetchone()
     conn.close()
-    return row["current_stage"] if row else 1
+    if not row:
+        return {"active_ctf": 1, "ctf1_stage": 1, "ctf2_stage": 1, "ctf2_unlocked": False}
+    
+    ctf1 = row.get("ctf1_stage") or row.get("current_stage") or 1
+    ctf2 = row.get("ctf2_stage") or 1
+    active = row.get("active_ctf") or 1
+    unlocked = (ctf1 > 10)
+    return {
+        "active_ctf": active,
+        "ctf1_stage": ctf1,
+        "ctf2_stage": ctf2,
+        "ctf2_unlocked": unlocked
+    }
+
+
+def switch_active_ctf(username, target_ctf):
+    target_ctf = int(target_ctf)
+    if target_ctf not in (1, 2):
+        return {"ok": False, "error": "Noto'g'ri CTF tanlandi."}
+    status = get_student_ctf_status(username)
+    if target_ctf == 2 and not status["ctf2_unlocked"]:
+        return {
+            "ok": False,
+            "error": "🔒 CTF 2 hali qulflangan! Undan foydalanish uchun avval CTF 1 ning barcha 10 ta bosqichini yakunlab, 1-Flagni qo'lga kiritishingiz kerak."
+        }
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE progress SET active_ctf = ?, updated_at = CURRENT_TIMESTAMP WHERE username = ?", (target_ctf, username))
+    conn.commit()
+    conn.close()
+    return {"ok": True, "active_ctf": target_ctf}
+
+
+def get_student_stage(username):
+    status = get_student_ctf_status(username)
+    if status["active_ctf"] == 2:
+        return status["ctf2_stage"]
+    return status["ctf1_stage"]
 
 
 def get_student_answers(username):
@@ -305,23 +376,27 @@ def get_student_answers(username):
     return {row["stage"]: row["expected"] for row in rows}
 
 
-def log_attempt(username, stage, result):
+def log_attempt(username, stage, result, ctf=None):
+    if ctf is None:
+        ctf = get_student_ctf_status(username)["active_ctf"]
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute(
-        "INSERT INTO attempts (username, stage, result) VALUES (?, ?, ?)",
-        (username, stage, result)
+        "INSERT INTO attempts (username, stage, result, ctf_id) VALUES (?, ?, ?, ?)",
+        (username, stage, result, ctf)
     )
     conn.commit()
     conn.close()
 
 
-def get_stage_fail_count(username, stage):
+def get_stage_fail_count(username, stage, ctf=None):
+    if ctf is None:
+        ctf = get_student_ctf_status(username)["active_ctf"]
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute(
-        "SELECT COUNT(*) as cnt FROM attempts WHERE username = ? AND stage = ? AND result = 'fail'",
-        (username, stage)
+        "SELECT COUNT(*) as cnt FROM attempts WHERE username = ? AND stage = ? AND ctf_id = ? AND result = 'fail'",
+        (username, stage, ctf)
     )
     row = cursor.fetchone()
     conn.close()
@@ -329,12 +404,19 @@ def get_stage_fail_count(username, stage):
 
 
 def update_student_stage(username, next_stage):
+    status = get_student_ctf_status(username)
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute(
-        "UPDATE progress SET current_stage = ?, updated_at = CURRENT_TIMESTAMP WHERE username = ?",
-        (next_stage, username)
-    )
+    if status["active_ctf"] == 2:
+        cursor.execute(
+            "UPDATE progress SET ctf2_stage = ?, updated_at = CURRENT_TIMESTAMP WHERE username = ?",
+            (next_stage, username)
+        )
+    else:
+        cursor.execute(
+            "UPDATE progress SET ctf1_stage = ?, updated_at = CURRENT_TIMESTAMP WHERE username = ?",
+            (next_stage, username)
+        )
     conn.commit()
     conn.close()
 
@@ -366,12 +448,19 @@ def get_leaderboard():
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute("""
-        SELECT p.username, p.current_stage, p.updated_at, f.flag,
+        SELECT p.username, 
+               COALESCE(p.ctf1_stage, p.current_stage, 1) as ctf1_stage,
+               COALESCE(p.ctf2_stage, 1) as ctf2_stage,
+               COALESCE(p.active_ctf, 1) as active_ctf,
+               (CASE WHEN COALESCE(p.active_ctf, 1) = 2 THEN COALESCE(p.ctf2_stage, 1) ELSE COALESCE(p.ctf1_stage, 1) END) as current_stage,
+               p.updated_at, f.flag,
                (SELECT COUNT(*) FROM attempts a WHERE a.username = p.username AND a.result = 'pass') as pass_count,
                (SELECT COUNT(*) FROM attempts a WHERE a.username = p.username AND a.result = 'fail') as fail_count
         FROM progress p
         LEFT JOIN flags f ON p.username = f.username
-        ORDER BY p.current_stage DESC, p.updated_at ASC;
+        ORDER BY 
+            (COALESCE(p.ctf1_stage, 1) + COALESCE(p.ctf2_stage, 1)) DESC,
+            p.updated_at ASC;
     """)
     rows = cursor.fetchall()
     conn.close()

@@ -141,8 +141,8 @@ document.addEventListener("DOMContentLoaded", () => {
         });
       }
 
-      // After check command — sync stage badge
-      if (trimmed === "check") {
+      // After check or ctf switch command — sync stage badge
+      if (trimmed === "check" || trimmed === "ctf1" || trimmed === "ctf2") {
         if (window.syncStageBadge) window.syncStageBadge();
       }
 
@@ -344,6 +344,11 @@ document.addEventListener("DOMContentLoaded", () => {
   window.terminalEngine = {
     executeCommand,
     updatePromptDisplay,
+    appendInfoLine(text) {
+      text.split("\n").forEach(line => {
+        if (line) appendLine(line, { color: "#00dcff" });
+      });
+    },
     setCurrentCwd(cwd) {
       currentCwd = cwd;
       updatePromptDisplay();

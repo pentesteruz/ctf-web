@@ -76,24 +76,126 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  // ── Stage Badge Sync ──────────────────────────────────────
+  // ── CTF Module Switching ─────────────────────────────────
+  const btnSwitchCtf1 = document.getElementById("btn-switch-ctf1");
+  const btnSwitchCtf2 = document.getElementById("btn-switch-ctf2");
+  const badgeCtf1     = document.getElementById("badge-ctf1");
+  const badgeCtf2     = document.getElementById("badge-ctf2");
+
+  async function switchCTF(targetCtf) {
+    try {
+      const res = await fetch("/api/switch_ctf", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ctf: targetCtf })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        if (data.error && data.error.includes("qulflangan")) {
+          alert("🔒 CTF 2 qulflangan!\n\nCTF 2 ga o'tish uchun avval CTF 1 ning barcha 10 ta bosqichini muvaffaqiyatli tugatib, 1-Flagni olishingiz shart!");
+        } else {
+          alert(data.error || "Modulni almashtirishda xatolik yuz berdi");
+        }
+        return false;
+      }
+
+      const username = lblUserDisplay ? lblUserDisplay.textContent.trim() : "";
+      if (window.terminalEngine) {
+        window.terminalEngine.setCurrentCwd(`/home/${username}`);
+      }
+
+      await syncStageBadge();
+
+      // Notify in terminal
+      if (window.terminalEngine && window.terminalEngine.appendInfoLine) {
+        window.terminalEngine.appendInfoLine(
+          `\n🔄 [ CTF Moduli O'zgartirildi ] Siz CTF ${targetCtf} moduliga o'tdingiz.\n💡 Boshlash: cat ~/ROADMAP.txt | Holat: status\n`
+        );
+      }
+
+      return true;
+    } catch (err) {
+      alert("Aloqa xatosi: " + err.message);
+      return false;
+    }
+  }
+
+  window.switchCTF = switchCTF;
+
+  if (btnSwitchCtf1) {
+    btnSwitchCtf1.addEventListener("click", () => switchCTF(1));
+  }
+  if (btnSwitchCtf2) {
+    btnSwitchCtf2.addEventListener("click", () => {
+      if (btnSwitchCtf2.classList.contains("locked")) {
+        alert("🔒 CTF 2 qulflangan!\n\nCTF 2 ga o'tish uchun avval CTF 1 ning barcha 10 ta bosqichini muvaffaqiyatli tugatib, 1-Flagni olishingiz shart!");
+        return;
+      }
+      switchCTF(2);
+    });
+  }
+
+  // ── Stage Badge & CTF Status Sync ────────────────────────
   async function syncStageBadge() {
     try {
-      const res = await fetch("/api/status");
+      const res = await fetch("/api/ctf_status");
       if (res.status === 401) { window.location.href = "/login"; return; }
       const data = await res.json();
-      const stage = data.current_stage;
+      const activeCtf = data.active_ctf || 1;
+      const ctf1Stage = data.ctf1_stage || 1;
+      const ctf2Stage = data.ctf2_stage || 1;
+      const ctf2Unlocked = !!data.ctf2_unlocked;
+
+      // Update stage pill in terminal header
       if (stagePill) {
-        if (stage <= 10) {
-          stagePill.textContent = `CTF 1 (Stage ${stage}/10)`;
-        } else if (stage <= 20) {
-          stagePill.textContent = `CTF 2 (Stage ${stage - 10}/10)`;
+        if (activeCtf === 1) {
+          stagePill.textContent = ctf1Stage <= 10
+            ? `CTF 1: Stage ${ctf1Stage}/10`
+            : `CTF 1: 10/10 ✅`;
         } else {
-          stagePill.textContent = "✅ Barchasi Tugallandi! 🏆";
+          stagePill.textContent = ctf2Stage <= 10
+            ? `CTF 2: Stage ${ctf2Stage}/10`
+            : `CTF 2: 10/10 🏆`;
         }
       }
+
+      // Update CTF 1 button
+      if (btnSwitchCtf1) {
+        if (activeCtf === 1) {
+          btnSwitchCtf1.classList.add("active");
+        } else {
+          btnSwitchCtf1.classList.remove("active");
+        }
+      }
+      if (badgeCtf1) {
+        badgeCtf1.textContent = ctf1Stage > 10 ? "10/10 ✅" : `Stage ${ctf1Stage}/10`;
+      }
+
+      // Update CTF 2 button
+      if (btnSwitchCtf2) {
+        if (activeCtf === 2) {
+          btnSwitchCtf2.classList.add("active");
+        } else {
+          btnSwitchCtf2.classList.remove("active");
+        }
+
+        if (ctf2Unlocked) {
+          btnSwitchCtf2.classList.remove("locked");
+          btnSwitchCtf2.title = "CTF 2 ga o'tish";
+          if (badgeCtf2) {
+            badgeCtf2.textContent = ctf2Stage > 10 ? "10/10 🏆" : `Stage ${ctf2Stage}/10`;
+          }
+        } else {
+          btnSwitchCtf2.classList.add("locked");
+          btnSwitchCtf2.title = "CTF 1 to'liq tugatilgach ochiladi";
+          if (badgeCtf2) {
+            badgeCtf2.textContent = "🔒 Qulflangan";
+          }
+        }
+      }
+
     } catch (err) {
-      console.error("Stage sync error:", err);
+      console.error("CTF status sync error:", err);
     }
   }
 
@@ -117,15 +219,19 @@ document.addEventListener("DOMContentLoaded", async () => {
       });
 
       const fill = (n, item) => {
-        document.getElementById(`podium-${n}-name`).textContent  = item.username;
-        const stageLabel = item.current_stage > 20
-          ? "✅ Barcha 20 ta bosqich"
-          : item.current_stage > 10
-            ? `CTF 2 (${item.current_stage - 10}/10)`
-            : `CTF 1 (${item.current_stage}/10)`;
-        document.getElementById(`podium-${n}-stage`).textContent = stageLabel;
-        document.getElementById(`podium-${n}-flag`).textContent  =
-          item.flag || `Stage ${item.current_stage}`;
+        document.getElementById(`podium-${n}-name`).textContent = item.username;
+        const ctf1 = item.ctf1_stage || 1;
+        const ctf2 = item.ctf2_stage || 1;
+        let podiumDesc = "";
+        if (ctf1 > 10 && ctf2 > 10) {
+          podiumDesc = "👑 CTF 1 & 2 To'liq Tugatildi!";
+        } else if (ctf1 > 10) {
+          podiumDesc = `CTF 1: 10/10 ✅ | CTF 2: ${Math.min(ctf2, 10)}/10`;
+        } else {
+          podiumDesc = `CTF 1: ${Math.min(ctf1, 10)}/10`;
+        }
+        document.getElementById(`podium-${n}-stage`).textContent = podiumDesc;
+        document.getElementById(`podium-${n}-flag`).textContent  = item.flag || "Flag yo'q";
       };
 
       if (board[0]) fill("1", board[0]);
@@ -134,33 +240,53 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       // Table
       if (board.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color: var(--text-muted); padding: 2rem;">Hech qanday ma'lumot yo'q</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color: var(--text-muted); padding: 2rem;">Hech qanday ma'lumot yo'q</td></tr>`;
         return;
       }
 
       tbody.innerHTML = board.map((item, idx) => {
         const rank   = idx + 1;
         const medal  = rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : `#${rank}`;
-        const pct    = item.current_stage > 20 ? 100 : Math.round((item.current_stage - 1) / 20 * 100);
+        const ctf1   = Math.min(item.ctf1_stage || 1, 11);
+        const ctf2   = Math.min(item.ctf2_stage || 1, 11);
+
+        // Progress percentage across all 20 stages (10 in CTF1 + 10 in CTF2)
+        const completedStages = (ctf1 > 10 ? 10 : ctf1 - 1) + (ctf2 > 10 ? 10 : ctf2 - 1);
+        const pct = Math.round((completedStages / 20) * 100);
+
         const color  = pct === 100 ? "linear-gradient(90deg,#00ff88,#00dc88)"
                      : pct >= 50   ? "linear-gradient(90deg,#3b82f6,#60a5fa)"
                      : pct >= 25   ? "linear-gradient(90deg,#f59e0b,#fbbf24)"
                      :               "#4a5a7a";
-        const stageStr = item.current_stage > 20
-          ? `<span style="color:var(--color-accent-green);font-weight:700;">20/20 ✅</span>`
-          : item.current_stage > 10
-            ? `<span style="color:var(--color-accent-cyan);font-weight:600;">CTF 2: ${item.current_stage - 10}/10</span>`
-            : `CTF 1: ${item.current_stage}/10`;
-        const flagStr  = item.flag
-          ? `<span style="color:var(--color-accent-green);font-size:0.75rem;">${item.flag}</span>`
-          : `<span style="color:var(--text-muted);">—</span>`;
-        const timeStr  = item.updated_at ? item.updated_at.substring(11,19) : "—";
+
+        const ctf1Str = ctf1 > 10
+          ? `<span style="color:var(--color-accent-green);font-weight:700;">10/10 ✅</span>`
+          : `Stage ${ctf1}/10`;
+
+        const ctf2Str = ctf1 <= 10
+          ? `<span style="color:var(--text-muted);">🔒 Qulflangan</span>`
+          : ctf2 > 10
+            ? `<span style="color:var(--color-accent-cyan);font-weight:700;">10/10 🏆</span>`
+            : `<span style="color:var(--color-accent-cyan);">Stage ${ctf2}/10</span>`;
+
+        let flagStr = `<span style="color:var(--text-muted);">—</span>`;
+        if (item.flag) {
+          flagStr = item.flag.split("|").map(f => {
+            const clean = f.trim();
+            const isGold = clean.startsWith("CTF2");
+            const colorCode = isGold ? "var(--color-accent-cyan)" : "var(--color-accent-green)";
+            return `<span style="display:inline-block; font-family:var(--font-mono); font-size:0.75rem; color:${colorCode}; margin:2px 0;">${clean}</span>`;
+          }).join("<br>");
+        }
+
+        const timeStr = item.updated_at ? item.updated_at.substring(11, 19) : "—";
 
         return `
           <tr>
             <td style="font-size:1.1rem;">${medal}</td>
             <td style="color:var(--color-accent-cyan);font-weight:600;">${item.username}</td>
-            <td>${stageStr}</td>
+            <td>${ctf1Str}</td>
+            <td>${ctf2Str}</td>
             <td>
               <div class="progress-bar-wrap">
                 <div class="progress-bar-track">
@@ -170,8 +296,8 @@ document.addEventListener("DOMContentLoaded", async () => {
               </div>
             </td>
             <td>
-              <span style="color:var(--color-accent-green);">${item.pass_count}✓</span>
-              <span style="color:#f87171; margin-left:6px;">${item.fail_count}✗</span>
+              <span style="color:var(--color-accent-green);">${item.pass_count || 0}✓</span>
+              <span style="color:#f87171; margin-left:6px;">${item.fail_count || 0}✗</span>
             </td>
             <td>${flagStr}</td>
             <td style="color:var(--text-muted);font-size:0.8rem;">${timeStr}</td>
@@ -181,14 +307,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     } catch (err) {
       console.error("Leaderboard error:", err);
-      if (tbody) tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#f87171; padding:2rem;">Xatolik yuz berdi</td></tr>`;
+      if (tbody) tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:#f87171; padding:2rem;">Xatolik yuz berdi</td></tr>`;
     }
   }
 
   if (btnRefreshLb) btnRefreshLb.addEventListener("click", fetchLeaderboard);
 
   // ── Handle 401 from terminal API (session expired mid-session) ──
-  // This is called from terminal.js when execute returns 401
   window.handleAuthExpired = () => {
     alert("Sessiya muddati tugadi. Qayta kirishingiz kerak.");
     window.location.href = "/login";

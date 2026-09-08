@@ -30,8 +30,7 @@ def login_required(f):
     return decorated
 
 # Quiz metadata (for status command and descriptions)
-QUIZZES = {
-    # ── CTF 1: Linux Basics (1-10) ───────────────────────────
+QUIZZES_CTF1 = {
     1: {
         "title": "quiz1: Kataloglar yaratish",
         "commands": "mkdir, cd, ls",
@@ -91,73 +90,75 @@ QUIZZES = {
         "commands": "chmod, ./final.sh, check",
         "description": "~/quiz10/final.sh skriptini bajariladigan qiling va ishga tushiring, so'ng terminalda 'check' deb yozing!",
         "guide": "cat ~/quiz10/README.txt"
-    },
-
-    # ── CTF 2: Advanced Parameters & No Spoilers (11-20) ───────
-    11: {
-        "title": "quiz11: Yopiq katalogga kirish (Permissions)",
-        "commands": "chmod, ls -la, cd, cat",
-        "description": "~/quiz11 ichidagi 'secret_zone' katalogiga kirish ruxsatini to'g'rilang va ichidagi yashirin kalitni ~/quiz11/answer.txt ga yozing.",
-        "guide": "cat ~/quiz11/README.txt"
-    },
-    12: {
-        "title": "quiz12: O'qish huquqi cheklangan fayl",
-        "commands": "chmod, cat",
-        "description": "~/quiz12/confidential.txt fayliga o'qish huquqini bering va undagi kalitni ~/quiz12/answer.txt ga ko'chiring.",
-        "guide": "cat ~/quiz12/README.txt"
-    },
-    13: {
-        "title": "quiz13: Aniq so'zni qidirish (Word matching)",
-        "commands": "grep, cat",
-        "description": "~/quiz13/mixed_words.txt ichidagi ko'plab soxta so'zlar orasidan mustaqil BiGs0Z kalitini ajratib oling va ~/quiz13/answer.txt ga yozing.",
-        "guide": "cat ~/quiz13/README.txt"
-    },
-    14: {
-        "title": "quiz14: Shovqin va registr tahlili",
-        "commands": "grep, cat",
-        "description": "~/quiz14/server_log.txt dagi DEBUG shovqinlarni filtrlab, auth_token kodini ~/quiz14/answer.txt ga yozing.",
-        "guide": "cat ~/quiz14/README.txt"
-    },
-    15: {
-        "title": "quiz15: Fayl hajmi bo'yicha qidiruv (Find by size)",
-        "commands": "find, cat",
-        "description": "~/quiz15/storage papkasidan aynan 1024 bayt hajmli faylni toping va undagi kalitni ~/quiz15/answer.txt ga yozing.",
-        "guide": "cat ~/quiz15/README.txt"
-    },
-    16: {
-        "title": "quiz16: Huquqi bo'yicha qidiruv (Find by permission)",
-        "commands": "find, cat",
-        "description": "~/quiz16/restricted ichidan 777 (xavfli ochiq) ruxsatli faylni aniqlang va undagi kalitni ~/quiz16/answer.txt ga yozing.",
-        "guide": "cat ~/quiz16/README.txt"
-    },
-    17: {
-        "title": "quiz17: Turi bo'yicha ajratish (Find by type)",
-        "commands": "find, cat",
-        "description": "~/quiz17/archive ichidan katalog emas, aynan oddiy fayl (file) turini toping va undagi kalitni ~/quiz17/answer.txt ga yozing.",
-        "guide": "cat ~/quiz17/README.txt"
-    },
-    18: {
-        "title": "quiz18: Qator raqamini aniqlash (Line number)",
-        "commands": "grep, cat",
-        "description": "~/quiz18/lines.txt ichidagi TARGET_SECRET so'zi aynan nechanchi qatorda joylashganini aniqlab, qator raqamini ~/quiz18/answer.txt ga yozing.",
-        "guide": "cat ~/quiz18/README.txt"
-    },
-    19: {
-        "title": "quiz19: Bo'sh fayllarni tozalash (Cleanup)",
-        "commands": "find, rm, cat",
-        "description": "~/quiz19/cleanup ichidagi bo'sh (empty) fayllar orasidan haqiqiy ma'lumotli faylni topib, kalitini ~/quiz19/answer.txt ga yozing.",
-        "guide": "cat ~/quiz19/README.txt"
-    },
-    20: {
-        "title": "quiz20: CTF 2 Yakuniy Sinov (Final Lockbox)",
-        "commands": "chmod, find, grep, check",
-        "description": "~/quiz20/lockbox katalogiga ruxsat bering, 512 baytli faylni toping, ichidagi FINAL_FLAG ni answer.txt ga yozing va 'check' bering!",
-        "guide": "cat ~/quiz20/README.txt"
     }
 }
 
+QUIZZES_CTF2 = {
+    1: {
+        "title": "quiz1: Yopiq katalogga kirish (Permissions)",
+        "commands": "chmod, ls -la, cd, cat",
+        "description": "~/quiz1 ichidagi 'secret_zone' katalogiga kirish ruxsatini to'g'rilang va ichidagi yashirin kalitni ~/quiz1/answer.txt ga yozing.",
+        "guide": "cat ~/quiz1/README.txt"
+    },
+    2: {
+        "title": "quiz2: O'qish huquqi cheklangan fayl",
+        "commands": "chmod, cat",
+        "description": "~/quiz2/confidential.txt fayliga o'qish huquqini bering va undagi kalitni ~/quiz2/answer.txt ga ko'chiring.",
+        "guide": "cat ~/quiz2/README.txt"
+    },
+    3: {
+        "title": "quiz3: Aniq so'zni qidirish (Word matching)",
+        "commands": "grep, cat",
+        "description": "~/quiz3/mixed_words.txt ichidagi ko'plab soxta so'zlar orasidan mustaqil BiGs0Z kalitini ajratib oling va ~/quiz3/answer.txt ga yozing.",
+        "guide": "cat ~/quiz3/README.txt"
+    },
+    4: {
+        "title": "quiz4: Shovqin va registr tahlili",
+        "commands": "grep, cat",
+        "description": "~/quiz4/server_log.txt dagi DEBUG shovqinlarni filtrlab, auth_token kodini ~/quiz4/answer.txt ga yozing.",
+        "guide": "cat ~/quiz4/README.txt"
+    },
+    5: {
+        "title": "quiz5: Fayl hajmi bo'yicha qidiruv (Find by size)",
+        "commands": "find, cat",
+        "description": "~/quiz5/storage papkasidan aynan 1024 bayt hajmli faylni toping va undagi kalitni ~/quiz5/answer.txt ga yozing.",
+        "guide": "cat ~/quiz5/README.txt"
+    },
+    6: {
+        "title": "quiz6: Huquqi bo'yicha qidiruv (Find by permission)",
+        "commands": "find, cat",
+        "description": "~/quiz6/restricted ichidan 777 (xavfli ochiq) ruxsatli faylni aniqlang va undagi kalitni ~/quiz6/answer.txt ga yozing.",
+        "guide": "cat ~/quiz6/README.txt"
+    },
+    7: {
+        "title": "quiz7: Turi bo'yicha ajratish (Find by type)",
+        "commands": "find, cat",
+        "description": "~/quiz7/archive ichidan katalog emas, aynan oddiy fayl (file) turini toping va undagi kalitni ~/quiz7/answer.txt ga yozing.",
+        "guide": "cat ~/quiz7/README.txt"
+    },
+    8: {
+        "title": "quiz8: Qator raqamini aniqlash (Line number)",
+        "commands": "grep, cat",
+        "description": "~/quiz8/lines.txt ichidagi TARGET_SECRET so'zi aynan nechanchi qatorda joylashganini aniqlab, qator raqamini ~/quiz8/answer.txt ga yozing.",
+        "guide": "cat ~/quiz8/README.txt"
+    },
+    9: {
+        "title": "quiz9: Bo'sh fayllarni tozalash (Cleanup)",
+        "commands": "find, rm, cat",
+        "description": "~/quiz9/cleanup ichidagi bo'sh (empty) fayllar orasidan haqiqiy ma'lumotli faylni topib, kalitini ~/quiz9/answer.txt ga yozing.",
+        "guide": "cat ~/quiz9/README.txt"
+    },
+    10: {
+        "title": "quiz10: CTF 2 Yakuniy Sinov (Final Lockbox)",
+        "commands": "chmod, find, grep, check",
+        "description": "~/quiz10/lockbox katalogiga ruxsat bering, 512 baytli faylni toping, ichidagi FINAL_FLAG ni answer.txt ga yozing va 'check' bering!",
+        "guide": "cat ~/quiz10/README.txt"
+    }
+}
+QUIZZES = QUIZZES_CTF1
+
 # Dynamic Step-by-Step Hints (4-urinish, 5-urinish, 6-urinish)
-HINTS = {
+HINTS_CTF1 = {
     1: {
         "hint1": "💡 Maslahat (1-daraja): Papka yaratish buyrug'idan foydalaning (mkdir).",
         "hint2": "💡 Maslahat (2-daraja): 'mkdir images docs documents' deb bir nechta papkani bir vaqtda yaratish mumkin.",
@@ -207,60 +208,62 @@ HINTS = {
         "hint1": "💡 Maslahat (1-daraja): Final skriptiga ijro huquqini bering va ishga tushiring.",
         "hint2": "💡 Maslahat (2-daraja): 'chmod +x final.sh' va './final.sh' qiling.",
         "hint3": "🚨 So'nggi maslahat: 'cd ~/quiz10 && chmod +x final.sh && ./final.sh' qiling va 'check' bering!"
-    },
-
-    # ── CTF 2 Hints ──────────────────────────────────────────
-    11: {
-        "hint1": "💡 Maslahat (1-daraja): Papkaga kirish uchun unga 'execute' (x) huquqi zarur. 'chmod' yordamida ruxsatni to'g'rilang.",
-        "hint2": "💡 Maslahat (2-daraja): 'chmod +rx secret_zone' yoki 'chmod 755 secret_zone' buyrug'ini bering, so'ng ichiga kiring.",
-        "hint3": "🚨 So'nggi maslahat: 'chmod 755 ~/quiz11/secret_zone && cat ~/quiz11/secret_zone/.secret_flag > ~/quiz11/answer.txt' buyrug'ini bering!"
-    },
-    12: {
-        "hint1": "💡 Maslahat (1-daraja): 'confidential.txt' faylida o'qish huquqi (r) yo'q. 'ls -l' bilan tekshiring va 'chmod' bilan o'qish huquqini bering.",
-        "hint2": "💡 Maslahat (2-daraja): 'chmod +r confidential.txt' yoki 'chmod 644 confidential.txt' buyrug'idan foydalaning.",
-        "hint3": "🚨 So'nggi maslahat: 'chmod +r ~/quiz12/confidential.txt && cat ~/quiz12/confidential.txt > ~/quiz12/answer.txt' qiling va 'check' bering!"
-    },
-    13: {
-        "hint1": "💡 Maslahat (1-daraja): Oddiy 'grep' boshqa so'zlarni ham chiqarib yuboradi. 'grep' ning to'liq so'zni topuvchi parametrini qidiring.",
-        "hint2": "💡 Maslahat (2-daraja): Aniq to'liq so'z chegarasi (word boundary) bo'yicha qidiruvchi parametr: '-w'. Misol: 'grep -w BiGs0Z file'.",
-        "hint3": "🚨 So'nggi maslahat: 'grep -w BiGs0Z ~/quiz13/mixed_words.txt' orqali chiqqan aniq so'zni ~/quiz13/answer.txt ga yozing!"
-    },
-    14: {
-        "hint1": "💡 Maslahat (1-daraja): Shovqinli qatorlarni filtrlab tashlash (invert-match) yoki katta-kichik harflarni e'tiborsiz qoldirish kerak.",
-        "hint2": "💡 Maslahat (2-daraja): 'grep -i auth_token' (registrga qaramay) yoki 'grep -v DEBUG' (DEBUG ni chiqarib tashlash) parametrlarini sinang.",
-        "hint3": "🚨 So'nggi maslahat: 'grep -i auth_token ~/quiz14/server_log.txt' ni bajaring va tokenni ~/quiz14/answer.txt ga saqlang!"
-    },
-    15: {
-        "hint1": "💡 Maslahat (1-daraja): Fayllarni birma-bir ochmang! 'find' buyrug'ining hajmni (size) filtrlash parametrini qo'llang.",
-        "hint2": "💡 Maslahat (2-daraja): 'find' da baytlar bo'yicha qidirish parametri: '-size 1024c'.",
-        "hint3": "🚨 So'nggi maslahat: 'find ~/quiz15/storage -size 1024c' orqali chiqqan faylni 'cat' qiling va kalitni ~/quiz15/answer.txt ga yozing!"
-    },
-    16: {
-        "hint1": "💡 Maslahat (1-daraja): Ruxsatlar bo'yicha qidiruv uchun 'find' buyrug'ining '-perm' parametrini ishlating.",
-        "hint2": "💡 Maslahat (2-daraja): 'find ~/quiz16/restricted -perm 777' buyrug'i aynan to'liq ochiq faylni topadi.",
-        "hint3": "🚨 So'nggi maslahat: 'find ~/quiz16/restricted -perm 777' faylini aniqlang, tarkibini ko'rib ~/quiz16/answer.txt ga yozing!"
-    },
-    17: {
-        "hint1": "💡 Maslahat (1-daraja): 'find' orqali faqat oddiy fayllarni (kataloglarni emas) qidirish mumkin.",
-        "hint2": "💡 Maslahat (2-daraja): Faqat fayllarni topish parametri: '-type f'. 'find archive -type f' ni bering.",
-        "hint3": "🚨 So'nggi maslahat: 'find ~/quiz17/archive -type f' orqali chiqqan fayl tarkibini ~/quiz17/answer.txt ga ko'chiring!"
-    },
-    18: {
-        "hint1": "💡 Maslahat (1-daraja): 'grep' buyrug'i qidirilayotgan so'z qaysi qatorda turganini raqam bilan ko'rsatib bera oladi.",
-        "hint2": "💡 Maslahat (2-daraja): Qator raqami uchun '-n' parametrini qo'shing: 'grep -n TARGET_SECRET lines.txt'.",
-        "hint3": "🚨 So'nggi maslahat: 'grep -n TARGET_SECRET ~/quiz18/lines.txt' orqali chiqqan qator raqamini ~/quiz18/answer.txt ga yozing!"
-    },
-    19: {
-        "hint1": "💡 Maslahat (1-daraja): Bo'sh bo'lmagan (hajmi 0 dan katta) faylni topish uchun 'find' dan foydalaning.",
-        "hint2": "💡 Maslahat (2-daraja): 'find ~/quiz19/cleanup -size +0c' parametri bo'sh bo'lmagan yagona haqiqiy faylni ko'rsatadi.",
-        "hint3": "🚨 So'nggi maslahat: 'find ~/quiz19/cleanup -size +0c' faylini 'cat' qilib, ichidagi kalitni ~/quiz19/answer.txt ga yozing!"
-    },
-    20: {
-        "hint1": "💡 Maslahat (1-daraja): Avval 'lockbox' papkasiga 'chmod 755' bering, so'ng 'find -size 512c' orqali faylni toping.",
-        "hint2": "💡 Maslahat (2-daraja): Topilgan fayl ichidan 'grep -w FINAL_FLAG' orqali yakuniy kalitni ajratib oling.",
-        "hint3": "🚨 So'nggi maslahat: 'chmod 755 ~/quiz20/lockbox', 'find ~/quiz20/lockbox -size 512c' faylidagi kodni ~/quiz20/answer.txt ga yozing va 'check' bering!"
     }
 }
+
+HINTS_CTF2 = {
+    1: {
+        "hint1": "💡 Maslahat (1-daraja): Papkaga kirish uchun unga 'execute' (x) huquqi zarur. 'chmod' yordamida ruxsatni to'g'rilang.",
+        "hint2": "💡 Maslahat (2-daraja): 'chmod +rx secret_zone' yoki 'chmod 755 secret_zone' buyrug'ini bering, so'ng ichiga kiring.",
+        "hint3": "🚨 So'nggi maslahat: 'chmod 755 ~/quiz1/secret_zone && cat ~/quiz1/secret_zone/.secret_flag > ~/quiz1/answer.txt' buyrug'ini bering!"
+    },
+    2: {
+        "hint1": "💡 Maslahat (1-daraja): 'confidential.txt' faylida o'qish huquqi (r) yo'q. 'ls -l' bilan tekshiring va 'chmod' bilan o'qish huquqini bering.",
+        "hint2": "💡 Maslahat (2-daraja): 'chmod +r confidential.txt' yoki 'chmod 644 confidential.txt' buyrug'idan foydalaning.",
+        "hint3": "🚨 So'nggi maslahat: 'chmod +r ~/quiz2/confidential.txt && cat ~/quiz2/confidential.txt > ~/quiz2/answer.txt' qiling va 'check' bering!"
+    },
+    3: {
+        "hint1": "💡 Maslahat (1-daraja): Oddiy 'grep' boshqa so'zlarni ham chiqarib yuboradi. 'grep' ning to'liq so'zni topuvchi parametrini qidiring.",
+        "hint2": "💡 Maslahat (2-daraja): Aniq to'liq so'z chegarasi (word boundary) bo'yicha qidiruvchi parametr: '-w'. Misol: 'grep -w BiGs0Z file'.",
+        "hint3": "🚨 So'nggi maslahat: 'grep -w BiGs0Z ~/quiz3/mixed_words.txt' orqali chiqqan aniq so'zni ~/quiz3/answer.txt ga yozing!"
+    },
+    4: {
+        "hint1": "💡 Maslahat (1-daraja): Shovqinli qatorlarni filtrlab tashlash (invert-match) yoki katta-kichik harflarni e'tiborsiz qoldirish kerak.",
+        "hint2": "💡 Maslahat (2-daraja): 'grep -i auth_token' (registrga qaramay) yoki 'grep -v DEBUG' (DEBUG ni chiqarib tashlash) parametrlarini sinang.",
+        "hint3": "🚨 So'nggi maslahat: 'grep -i auth_token ~/quiz4/server_log.txt' ni bajaring va tokenni ~/quiz4/answer.txt ga saqlang!"
+    },
+    5: {
+        "hint1": "💡 Maslahat (1-daraja): Fayllarni birma-bir ochmang! 'find' buyrug'ining hajmni (size) filtrlash parametrini qo'llang.",
+        "hint2": "💡 Maslahat (2-daraja): 'find' da baytlar bo'yicha qidirish parametri: '-size 1024c'.",
+        "hint3": "🚨 So'nggi maslahat: 'find ~/quiz5/storage -size 1024c' orqali chiqqan faylni 'cat' qiling va kalitni ~/quiz5/answer.txt ga yozing!"
+    },
+    6: {
+        "hint1": "💡 Maslahat (1-daraja): Ruxsatlar bo'yicha qidiruv uchun 'find' buyrug'ining '-perm' parametrini ishlating.",
+        "hint2": "💡 Maslahat (2-daraja): 'find ~/quiz6/restricted -perm 777' buyrug'i aynan to'liq ochiq faylni topadi.",
+        "hint3": "🚨 So'nggi maslahat: 'find ~/quiz6/restricted -perm 777' faylini aniqlang, tarkibini ko'rib ~/quiz6/answer.txt ga yozing!"
+    },
+    7: {
+        "hint1": "💡 Maslahat (1-daraja): 'find' orqali faqat oddiy fayllarni (kataloglarni emas) qidirish mumkin.",
+        "hint2": "💡 Maslahat (2-daraja): Faqat fayllarni topish parametri: '-type f'. 'find archive -type f' ni bering.",
+        "hint3": "🚨 So'nggi maslahat: 'find ~/quiz7/archive -type f' orqali chiqqan fayl tarkibini ~/quiz7/answer.txt ga ko'chiring!"
+    },
+    8: {
+        "hint1": "💡 Maslahat (1-daraja): 'grep' buyrug'i qidirilayotgan so'z qaysi qatorda turganini raqam bilan ko'rsatib bera oladi.",
+        "hint2": "💡 Maslahat (2-daraja): Qator raqami uchun '-n' parametrini qo'shing: 'grep -n TARGET_SECRET lines.txt'.",
+        "hint3": "🚨 So'nggi maslahat: 'grep -n TARGET_SECRET ~/quiz8/lines.txt' orqali chiqqan qator raqamini ~/quiz8/answer.txt ga yozing!"
+    },
+    9: {
+        "hint1": "💡 Maslahat (1-daraja): Bo'sh bo'lmagan (hajmi 0 dan katta) faylni topish uchun 'find' dan foydalaning.",
+        "hint2": "💡 Maslahat (2-daraja): 'find ~/quiz9/cleanup -size +0c' parametri bo'sh bo'lmagan yagona haqiqiy faylni ko'rsatadi.",
+        "hint3": "🚨 So'nggi maslahat: 'find ~/quiz9/cleanup -size +0c' faylini 'cat' qilib, ichidagi kalitni ~/quiz9/answer.txt ga yozing!"
+    },
+    10: {
+        "hint1": "💡 Maslahat (1-daraja): Avval 'lockbox' papkasiga 'chmod 755' bering, so'ng 'find -size 512c' orqali faylni toping.",
+        "hint2": "💡 Maslahat (2-daraja): Topilgan fayl ichidan 'grep -w FINAL_FLAG' orqali yakuniy kalitni ajratib oling.",
+        "hint3": "🚨 So'nggi maslahat: 'chmod 755 ~/quiz10/lockbox', 'find ~/quiz10/lockbox -size 512c' faylidagi kodni ~/quiz10/answer.txt ga yozing va 'check' bering!"
+    }
+}
+HINTS = HINTS_CTF1
 
 
 def generate_key(prefix, length=8):
@@ -270,47 +273,51 @@ def generate_key(prefix, length=8):
 
 def get_user_fs(username):
     db.seed_student(username)
+    ctf_status = db.get_student_ctf_status(username)
+    active_ctf = ctf_status["active_ctf"]
+    stage = ctf_status["ctf2_stage"] if active_ctf == 2 else ctf_status["ctf1_stage"]
     answers = db.get_student_answers(username)
-    stage = db.get_student_stage(username)
 
     fs = {
         "/": {"type": "dir", "owner": "root", "mode": "755", "children": ["home", "var", "bin", "tmp", "etc"]},
         "/home": {"type": "dir", "owner": "root", "mode": "755", "children": [username]},
         f"/home/{username}": {
             "type": "dir", "owner": username, "mode": "700",
-            "children": ["ROADMAP.txt"] + [f"quiz{i}" for i in range(1, min(stage + 1, 21))]
-        },
-        f"/home/{username}/ROADMAP.txt": {
+            "children": ["ROADMAP.txt"] + [f"quiz{i}" for i in range(1, min(stage + 1, 11))]
+        }
+    }
+
+    if active_ctf == 1:
+        _populate_ctf1_fs(fs, username, stage, answers)
+    else:
+        _populate_ctf2_fs(fs, username, stage, answers)
+
+    return fs
+
+
+def _populate_ctf1_fs(fs, username, stage, answers):
+    fs[f"/home/{username}/ROADMAP.txt"] = {
             "type": "file", "owner": username, "mode": "644",
             "content": (
                 "========================================================================\n"
-                "🚩 LINUX CTF ROADMAP (YO'L XARITASI) 🚩\n"
+                "🚩 CTF 1: LINUX ASOSLARI ROADMAP (YO'L XARITASI) 🚩\n"
                 "========================================================================\n\n"
                 "📌 ASOSIY BUYRUQLAR:\n"
                 "  • check   - Joriy bosqichdagi vazifangiz to'g'ri bajarilganini tekshiradi.\n"
                 "  • status  - Hozir qaysi bosqichda ekanligingiz va vazifa shartini ko'rsatadi.\n\n"
-                "🗺 CTF 1: ASOSLAR (1-10 BOSQICHLAR):\n"
+                "🗺 CTF 1 BOSQICHLARI (1-10):\n"
                 "   1. quiz1  | mkdir, cd, ls       | images, docs, documents papkalarini yaratish\n"
-                "   2. quiz2  | touch, cd            | docs/ ichida notes.txt va todo.txt yaratish\n"
-                "   3. quiz3  | nano, cat, echo      | notes.txt ichiga \"linux200\" yozish\n"
-                "   4. quiz4  | head, tail, grep     | bigfile.log dan KEY-... ni topib answer.txt ga yozish\n"
-                "   5. quiz5  | less, more, grep     | bigfile2.txt dan PASS-... ni topib answer.txt ga yozish\n"
-                "   6. quiz6  | rm, rm -r            | Keraksiz fayl va papkalarni xavfsiz o'chirish\n"
-                "   7. quiz7  | chmod, ./            | script.sh ga execute ruxsati berish va ishga tushirish\n"
-                "   8. quiz8  | chown, sudo          | secret.txt faylini o'zingizga biriktirish\n"
-                "   9. quiz9  | ls -la, cd, cat      | Yashirin .flag_part faylini topish va saqlash\n"
-                "  10. quiz10 | CTF 1 Final          | final.sh ni ishga tushirish va 1-FLAG ni olish!\n\n"
-                "🔥 CTF 2: CHUQURLASHTIRILGAN TAHLIL (11-20 BOSQICHLAR):\n"
-                "  11. quiz11 | chmod, cd            | Yopiq secret_zone papkasiga kirish ruxsatini to'g'rilash\n"
-                "  12. quiz12 | chmod, cat           | O'qish huquqi cheklangan confidential.txt ni o'qish\n"
-                "  13. quiz13 | grep -w              | Yuzlab soxta so'zlar orasidan mustaqil BiGs0Z ni topish\n"
-                "  14. quiz14 | grep -i, grep -v     | Logdagi shovqinlarni filtrlab auth_token ni ajratish\n"
-                "  15. quiz15 | find -size           | storage/ dan aynan 1024 baytli faylni qidirib topish\n"
-                "  16. quiz16 | find -perm           | 777 ruxsatli xavfli ochiq faylni aniqlash\n"
-                "  17. quiz17 | find -type           | archive/ dan katalog emas, aynan oddiy faylni ajratish\n"
-                "  18. quiz18 | grep -n              | Kalit qaysi qatorda turganini raqam bilan aniqlash\n"
-                "  19. quiz19 | find, rm             | Bo'sh fayllar orasidan ma'lumotli haqiqiy faylni topish\n"
-                "  20. quiz20 | CTF 2 Final          | Final Lockbox: chmod + find + grep va 2-FLAG!\n\n"
+                "   2. quiz2  | touch, cd           | docs/ ichida notes.txt va todo.txt yaratish\n"
+                "   3. quiz3  | nano, cat, echo     | notes.txt ichiga \"linux200\" yozish\n"
+                "   4. quiz4  | head, tail, grep    | bigfile.log dan KEY-... ni topib answer.txt ga yozish\n"
+                "   5. quiz5  | less, more, grep    | bigfile2.txt dan PASS-... ni topib answer.txt ga yozish\n"
+                "   6. quiz6  | rm, rm -r           | Keraksiz fayl va papkalarni xavfsiz o'chirish\n"
+                "   7. quiz7  | chmod, ./           | script.sh ga execute ruxsati berish va ishga tushirish\n"
+                "   8. quiz8  | chown, sudo         | secret.txt faylini o'zingizga biriktirish\n"
+                "   9. quiz9  | ls -la, cd, cat     | Yashirin .flag_part faylini topish va saqlash\n"
+                "  10. quiz10 | CTF 1 Final         | final.sh ni ishga tushirish va 1-FLAG ni olish!\n\n"
+                "💡 Eslatma: CTF 1 ning 10 ta bosqichini to'liq yakunlaganingizdan so'ng,\n"
+                "   CTF 2 (Ilg'or Kiberxavfsizlik) avtomatik ochiladi!\n\n"
                 "🚀 Boshlash uchun:\n"
                 "  cd ~/quiz1\n"
                 "  cat README.txt\n\n"
@@ -318,7 +325,6 @@ def get_user_fs(username):
                 "========================================================================"
             )
         }
-    }
 
     # ── quiz1: mkdir/cd/ls ──
     fs[f"/home/{username}/quiz1"] = {
@@ -671,22 +677,51 @@ def get_user_fs(username):
             )
         }
 
-    # ═════════════════════════════════════════════════════════
-    # ── CTF 2: CHUQURLASHTIRILGAN BOSQICHLAR (11-20) ─────────
-    # ═════════════════════════════════════════════════════════
 
-    # ── quiz11: chmod katalogga kirish ──
-    if stage >= 11:
+def _populate_ctf2_fs(fs, username, stage, answers):
+    # ═════════════════════════════════════════════════════════
+    # ── CTF 2: CHUQURLASHTIRILGAN BOSQICHLAR (1-10) ──────────
+    # ═════════════════════════════════════════════════════════
+    fs[f"/home/{username}/ROADMAP.txt"] = {
+            "type": "file", "owner": username, "mode": "644",
+            "content": (
+                "========================================================================\n"
+                "🔥 CTF 2: ILG'OR TIZIM & KIBERXAVFSIZLIK ROADMAP 🔥\n"
+                "========================================================================\n\n"
+                "📌 ASOSIY BUYRUQLAR:\n"
+                "  • check   - Joriy bosqichdagi vazifangiz to'g'ri bajarilganini tekshiradi.\n"
+                "  • status  - Hozir qaysi bosqichda ekanligingiz va vazifa shartini ko'rsatadi.\n\n"
+                "🗺 CTF 2 BOSQICHLARI (1-10):\n"
+                "   1. quiz1  | chmod, cd            | Yopiq secret_zone papkasiga kirish ruxsatini to'g'rilash\n"
+                "   2. quiz2  | chmod, cat           | O'qish huquqi cheklangan confidential.txt ni o'qish\n"
+                "   3. quiz3  | grep -w              | Yuzlab soxta so'zlar orasidan mustaqil BiGs0Z ni topish\n"
+                "   4. quiz4  | grep -i, grep -v     | Logdagi shovqinlarni filtrlab auth_token ni ajratish\n"
+                "   5. quiz5  | find -size           | storage/ dan aynan 1024 baytli faylni qidirib topish\n"
+                "   6. quiz6  | find -perm           | 777 ruxsatli xavfli ochiq faylni aniqlash\n"
+                "   7. quiz7  | find -type           | archive/ dan katalog emas, aynan oddiy faylni ajratish\n"
+                "   8. quiz8  | grep -n              | Kalit qaysi qatorda turganini raqam bilan aniqlash\n"
+                "   9. quiz9  | find, rm             | Bo'sh fayllar orasidan ma'lumotli haqiqiy faylni topish\n"
+                "  10. quiz10 | CTF 2 Final          | Final Lockbox: chmod + find + grep va 2-FLAG! 🏆\n\n"
+                "🚀 Boshlash uchun:\n"
+                "  cd ~/quiz1\n"
+                "  cat README.txt\n\n"
+                "Omad tilaymiz!\n"
+                "========================================================================"
+            )
+        }
+
+    # ── quiz1: chmod katalogga kirish ──
+    if stage >= 1:
         k11 = answers.get(11, "SEC11-DEFAULT")
-        fs[f"/home/{username}/quiz11"] = {
+        fs[f"/home/{username}/quiz1"] = {
             "type": "dir", "owner": username, "mode": "755",
             "children": ["README.txt", "secret_zone"]
         }
-        fs[f"/home/{username}/quiz11/README.txt"] = {
+        fs[f"/home/{username}/quiz1/README.txt"] = {
             "type": "file", "owner": username, "mode": "644",
             "content": (
                 "========================================\n"
-                "📌 QUIZ 11: Yopiq katalogga kirish (Permissions)\n"
+                "📌 QUIZ 1: Yopiq katalogga kirish (Permissions)\n"
                 "========================================\n"
                 "🎯 Mavzu: chmod, ls -la, cd\n\n"
                 "📝 Vazifa:\n"
@@ -699,27 +734,27 @@ def get_user_fs(username):
                 "========================================"
             )
         }
-        fs[f"/home/{username}/quiz11/secret_zone"] = {
+        fs[f"/home/{username}/quiz1/secret_zone"] = {
             "type": "dir", "owner": username, "mode": "000",
             "children": [".secret_flag"]
         }
-        fs[f"/home/{username}/quiz11/secret_zone/.secret_flag"] = {
+        fs[f"/home/{username}/quiz1/secret_zone/.secret_flag"] = {
             "type": "file", "owner": username, "mode": "644",
             "content": k11
         }
 
-    # ── quiz12: chmod faylni o'qish ──
-    if stage >= 12:
+    # ── quiz2: chmod faylni o'qish ──
+    if stage >= 2:
         k12 = answers.get(12, "CONF12-DEFAULT")
-        fs[f"/home/{username}/quiz12"] = {
+        fs[f"/home/{username}/quiz2"] = {
             "type": "dir", "owner": username, "mode": "755",
             "children": ["README.txt", "confidential.txt"]
         }
-        fs[f"/home/{username}/quiz12/README.txt"] = {
+        fs[f"/home/{username}/quiz2/README.txt"] = {
             "type": "file", "owner": username, "mode": "644",
             "content": (
                 "========================================\n"
-                "📌 QUIZ 12: O'qish huquqi cheklangan fayl\n"
+                "📌 QUIZ 2: O'qish huquqi cheklangan fayl\n"
                 "========================================\n"
                 "🎯 Mavzu: chmod, cat\n\n"
                 "📝 Vazifa:\n"
@@ -730,13 +765,13 @@ def get_user_fs(username):
                 "========================================"
             )
         }
-        fs[f"/home/{username}/quiz12/confidential.txt"] = {
+        fs[f"/home/{username}/quiz2/confidential.txt"] = {
             "type": "file", "owner": username, "mode": "200",
             "content": k12
         }
 
-    # ── quiz13: grep -w so'z chegarasi ──
-    if stage >= 13:
+    # ── quiz3: grep -w so'z chegarasi ──
+    if stage >= 3:
         k13 = answers.get(13, "BiGs0Z_REAL")
         fake_words = [
             "not_BiGs0Z", "BiGs0Z_fake", "testBiGs0Z123", "fake_BiGs0Z_word",
@@ -750,15 +785,15 @@ def get_user_fs(username):
         for i in range(41, 70):
             lines.append(f"qator {i}: {fake_words[i % len(fake_words)]}")
 
-        fs[f"/home/{username}/quiz13"] = {
+        fs[f"/home/{username}/quiz3"] = {
             "type": "dir", "owner": username, "mode": "755",
             "children": ["README.txt", "mixed_words.txt"]
         }
-        fs[f"/home/{username}/quiz13/README.txt"] = {
+        fs[f"/home/{username}/quiz3/README.txt"] = {
             "type": "file", "owner": username, "mode": "644",
             "content": (
                 "========================================\n"
-                "📌 QUIZ 13: Aniq so'zni qidirish (Word matching)\n"
+                "📌 QUIZ 3: Aniq so'zni qidirish (Word matching)\n"
                 "========================================\n"
                 "🎯 Mavzu: grep\n\n"
                 "📝 Vazifa:\n"
@@ -770,13 +805,13 @@ def get_user_fs(username):
                 "========================================"
             )
         }
-        fs[f"/home/{username}/quiz13/mixed_words.txt"] = {
+        fs[f"/home/{username}/quiz3/mixed_words.txt"] = {
             "type": "file", "owner": username, "mode": "644",
             "content": "\n".join(lines)
         }
 
-    # ── quiz14: grep -i va grep -v ──
-    if stage >= 14:
+    # ── quiz4: grep -i va grep -v ──
+    if stage >= 4:
         k14 = answers.get(14, "LOG14-DEFAULT")
         log_entries = []
         for i in range(1, 60):
@@ -785,15 +820,15 @@ def get_user_fs(username):
         for i in range(61, 100):
             log_entries.append(f"2026-09-09 11:{i%60:02d}:00 [DEBUG] routine log {i} - normal state")
 
-        fs[f"/home/{username}/quiz14"] = {
+        fs[f"/home/{username}/quiz4"] = {
             "type": "dir", "owner": username, "mode": "755",
             "children": ["README.txt", "server_log.txt"]
         }
-        fs[f"/home/{username}/quiz14/README.txt"] = {
+        fs[f"/home/{username}/quiz4/README.txt"] = {
             "type": "file", "owner": username, "mode": "644",
             "content": (
                 "========================================\n"
-                "📌 QUIZ 14: Shovqin va registr tahlili\n"
+                "📌 QUIZ 4: Shovqin va registr tahlili\n"
                 "========================================\n"
                 "🎯 Mavzu: grep\n\n"
                 "📝 Vazifa:\n"
@@ -804,40 +839,38 @@ def get_user_fs(username):
                 "========================================"
             )
         }
-        fs[f"/home/{username}/quiz14/server_log.txt"] = {
+        fs[f"/home/{username}/quiz4/server_log.txt"] = {
             "type": "file", "owner": username, "mode": "644",
             "content": "\n".join(log_entries)
         }
 
-    # ── quiz15: find -size ──
-    if stage >= 15:
+    # ── quiz5: find -size ──
+    if stage >= 5:
         k15 = answers.get(15, "SIZE15-DEFAULT")
         storage_children = []
         for i in range(1, 21):
             fname = f"chunk_{i:02d}.dat"
             storage_children.append(fname)
-            # har xil hajmdagi kontent
             cnt = "x" * (i * 45)
-            fs[f"/home/{username}/quiz15/storage/{fname}"] = {
+            fs[f"/home/{username}/quiz5/storage/{fname}"] = {
                 "type": "file", "owner": username, "mode": "644", "content": cnt
             }
-        # Aynan 1024 baytli fayl
         exact_fname = "target_package.bin"
         storage_children.append(exact_fname)
         exact_content = f"{k15}\n" + ("A" * (1024 - len(k15) - 1))
-        fs[f"/home/{username}/quiz15/storage/{exact_fname}"] = {
+        fs[f"/home/{username}/quiz5/storage/{exact_fname}"] = {
             "type": "file", "owner": username, "mode": "644", "content": exact_content
         }
 
-        fs[f"/home/{username}/quiz15"] = {
+        fs[f"/home/{username}/quiz5"] = {
             "type": "dir", "owner": username, "mode": "755",
             "children": ["README.txt", "storage"]
         }
-        fs[f"/home/{username}/quiz15/README.txt"] = {
+        fs[f"/home/{username}/quiz5/README.txt"] = {
             "type": "file", "owner": username, "mode": "644",
             "content": (
                 "========================================\n"
-                "📌 QUIZ 15: Fayl hajmi bo'yicha qidiruv\n"
+                "📌 QUIZ 5: Fayl hajmi bo'yicha qidiruv\n"
                 "========================================\n"
                 "🎯 Mavzu: find\n\n"
                 "📝 Vazifa:\n"
@@ -848,37 +881,36 @@ def get_user_fs(username):
                 "========================================"
             )
         }
-        fs[f"/home/{username}/quiz15/storage"] = {
+        fs[f"/home/{username}/quiz5/storage"] = {
             "type": "dir", "owner": username, "mode": "755",
             "children": storage_children
         }
 
-    # ── quiz16: find -perm ──
-    if stage >= 16:
+    # ── quiz6: find -perm ──
+    if stage >= 6:
         k16 = answers.get(16, "PERM16-DEFAULT")
         restricted_children = []
         for i in range(1, 15):
             fname = f"secure_item_{i:02d}.conf"
             restricted_children.append(fname)
-            fs[f"/home/{username}/quiz16/restricted/{fname}"] = {
+            fs[f"/home/{username}/quiz6/restricted/{fname}"] = {
                 "type": "file", "owner": username, "mode": "640", "content": f"safe config {i}"
             }
-        # 777 ruxsatli fayl
         danger_fname = "insecure_node.cfg"
         restricted_children.append(danger_fname)
-        fs[f"/home/{username}/quiz16/restricted/{danger_fname}"] = {
+        fs[f"/home/{username}/quiz6/restricted/{danger_fname}"] = {
             "type": "file", "owner": username, "mode": "777", "content": k16
         }
 
-        fs[f"/home/{username}/quiz16"] = {
+        fs[f"/home/{username}/quiz6"] = {
             "type": "dir", "owner": username, "mode": "755",
             "children": ["README.txt", "restricted"]
         }
-        fs[f"/home/{username}/quiz16/README.txt"] = {
+        fs[f"/home/{username}/quiz6/README.txt"] = {
             "type": "file", "owner": username, "mode": "644",
             "content": (
                 "========================================\n"
-                "📌 QUIZ 16: Huquqi bo'yicha qidiruv\n"
+                "📌 QUIZ 6: Huquqi bo'yicha qidiruv\n"
                 "========================================\n"
                 "🎯 Mavzu: find\n\n"
                 "📝 Vazifa:\n"
@@ -888,23 +920,23 @@ def get_user_fs(username):
                 "========================================"
             )
         }
-        fs[f"/home/{username}/quiz16/restricted"] = {
+        fs[f"/home/{username}/quiz6/restricted"] = {
             "type": "dir", "owner": username, "mode": "755",
             "children": restricted_children
         }
 
-    # ── quiz17: find -type ──
-    if stage >= 17:
+    # ── quiz7: find -type ──
+    if stage >= 7:
         k17 = answers.get(17, "TYPE17-DEFAULT")
-        fs[f"/home/{username}/quiz17"] = {
+        fs[f"/home/{username}/quiz7"] = {
             "type": "dir", "owner": username, "mode": "755",
             "children": ["README.txt", "archive"]
         }
-        fs[f"/home/{username}/quiz17/README.txt"] = {
+        fs[f"/home/{username}/quiz7/README.txt"] = {
             "type": "file", "owner": username, "mode": "644",
             "content": (
                 "========================================\n"
-                "📌 QUIZ 17: Turi bo'yicha ajratish (Find by type)\n"
+                "📌 QUIZ 7: Turi bo'yicha ajratish (Find by type)\n"
                 "========================================\n"
                 "🎯 Mavzu: find\n\n"
                 "📝 Vazifa:\n"
@@ -915,25 +947,25 @@ def get_user_fs(username):
                 "========================================"
             )
         }
-        fs[f"/home/{username}/quiz17/archive"] = {
+        fs[f"/home/{username}/quiz7/archive"] = {
             "type": "dir", "owner": username, "mode": "755",
             "children": ["backup_folder", "temp_dir", "vault_data"]
         }
-        fs[f"/home/{username}/quiz17/archive/backup_folder"] = {
+        fs[f"/home/{username}/quiz7/archive/backup_folder"] = {
             "type": "dir", "owner": username, "mode": "755", "children": ["notes.txt"]
         }
-        fs[f"/home/{username}/quiz17/archive/backup_folder/notes.txt"] = {
+        fs[f"/home/{username}/quiz7/archive/backup_folder/notes.txt"] = {
             "type": "file", "owner": username, "mode": "644", "content": "bu oddiy qoralama"
         }
-        fs[f"/home/{username}/quiz17/archive/temp_dir"] = {
+        fs[f"/home/{username}/quiz7/archive/temp_dir"] = {
             "type": "dir", "owner": username, "mode": "755", "children": []
         }
-        fs[f"/home/{username}/quiz17/archive/vault_data"] = {
+        fs[f"/home/{username}/quiz7/archive/vault_data"] = {
             "type": "file", "owner": username, "mode": "644", "content": k17
         }
 
-    # ── quiz18: grep -n qator raqami ──
-    if stage >= 18:
+    # ── quiz8: grep -n qator raqami ──
+    if stage >= 8:
         k18 = answers.get(18, "LINE18-DEFAULT")
         line_entries = []
         for i in range(1, 345):
@@ -942,15 +974,15 @@ def get_user_fs(username):
         for i in range(346, 501):
             line_entries.append(f"satr #{i} - odatiy ma'lumot")
 
-        fs[f"/home/{username}/quiz18"] = {
+        fs[f"/home/{username}/quiz8"] = {
             "type": "dir", "owner": username, "mode": "755",
             "children": ["README.txt", "lines.txt"]
         }
-        fs[f"/home/{username}/quiz18/README.txt"] = {
+        fs[f"/home/{username}/quiz8/README.txt"] = {
             "type": "file", "owner": username, "mode": "644",
             "content": (
                 "========================================\n"
-                "📌 QUIZ 18: Qator raqamini aniqlash (Line number)\n"
+                "📌 QUIZ 8: Qator raqamini aniqlash (Line number)\n"
                 "========================================\n"
                 "🎯 Mavzu: grep\n\n"
                 "📝 Vazifa:\n"
@@ -960,35 +992,35 @@ def get_user_fs(username):
                 "========================================"
             )
         }
-        fs[f"/home/{username}/quiz18/lines.txt"] = {
+        fs[f"/home/{username}/quiz8/lines.txt"] = {
             "type": "file", "owner": username, "mode": "644",
             "content": "\n".join(line_entries)
         }
 
-    # ── quiz19: bo'sh fayllarni saralash ──
-    if stage >= 19:
+    # ── quiz9: bo'sh fayllarni saralash ──
+    if stage >= 9:
         k19 = answers.get(19, "CLEAN19-DEFAULT")
         cleanup_children = []
         for i in range(1, 21):
             fname = f"empty_{i:02d}.log"
             cleanup_children.append(fname)
-            fs[f"/home/{username}/quiz19/cleanup/{fname}"] = {
+            fs[f"/home/{username}/quiz9/cleanup/{fname}"] = {
                 "type": "file", "owner": username, "mode": "644", "content": ""
             }
         cleanup_children.append("real_signal.txt")
-        fs[f"/home/{username}/quiz19/cleanup/real_signal.txt"] = {
+        fs[f"/home/{username}/quiz9/cleanup/real_signal.txt"] = {
             "type": "file", "owner": username, "mode": "644", "content": k19
         }
 
-        fs[f"/home/{username}/quiz19"] = {
+        fs[f"/home/{username}/quiz9"] = {
             "type": "dir", "owner": username, "mode": "755",
             "children": ["README.txt", "cleanup"]
         }
-        fs[f"/home/{username}/quiz19/README.txt"] = {
+        fs[f"/home/{username}/quiz9/README.txt"] = {
             "type": "file", "owner": username, "mode": "644",
             "content": (
                 "========================================\n"
-                "📌 QUIZ 19: Bo'sh fayllarni tozalash (Cleanup)\n"
+                "📌 QUIZ 9: Bo'sh fayllarni tozalash (Cleanup)\n"
                 "========================================\n"
                 "🎯 Mavzu: find, cat\n\n"
                 "📝 Vazifa:\n"
@@ -998,37 +1030,36 @@ def get_user_fs(username):
                 "========================================"
             )
         }
-        fs[f"/home/{username}/quiz19/cleanup"] = {
+        fs[f"/home/{username}/quiz9/cleanup"] = {
             "type": "dir", "owner": username, "mode": "755",
             "children": cleanup_children
         }
 
-    # ── quiz20: final lockbox ──
-    if stage >= 20:
+    # ── quiz10: final lockbox ──
+    if stage >= 10:
         k20 = answers.get(20, "FINAL20-DEFAULT")
         lockbox_children = []
         for i in range(1, 10):
             fname = f"box_{i:02d}.bin"
             lockbox_children.append(fname)
-            fs[f"/home/{username}/quiz20/lockbox/{fname}"] = {
+            fs[f"/home/{username}/quiz10/lockbox/{fname}"] = {
                 "type": "file", "owner": username, "mode": "644", "content": "0" * (i * 50)
             }
-        # 512 baytli fayl ichida FINAL_FLAG: k20
         exact_512 = f"FINAL_FLAG: {k20}\n" + ("Z" * (512 - len(f"FINAL_FLAG: {k20}\n")))
         lockbox_children.append("secure_vault.dat")
-        fs[f"/home/{username}/quiz20/lockbox/secure_vault.dat"] = {
+        fs[f"/home/{username}/quiz10/lockbox/secure_vault.dat"] = {
             "type": "file", "owner": username, "mode": "644", "content": exact_512
         }
 
-        fs[f"/home/{username}/quiz20"] = {
+        fs[f"/home/{username}/quiz10"] = {
             "type": "dir", "owner": username, "mode": "755",
             "children": ["README.txt", "lockbox"]
         }
-        fs[f"/home/{username}/quiz20/README.txt"] = {
+        fs[f"/home/{username}/quiz10/README.txt"] = {
             "type": "file", "owner": username, "mode": "644",
             "content": (
                 "========================================\n"
-                "📌 QUIZ 20: CTF 2 Yakuniy Sinov (Final Lockbox)\n"
+                "📌 QUIZ 10: CTF 2 Yakuniy Sinov (Final Lockbox)\n"
                 "========================================\n"
                 "🎯 Mavzu: chmod, find, grep\n\n"
                 "📝 Vazifa:\n"
@@ -1040,7 +1071,7 @@ def get_user_fs(username):
                 "========================================"
             )
         }
-        fs[f"/home/{username}/quiz20/lockbox"] = {
+        fs[f"/home/{username}/quiz10/lockbox"] = {
             "type": "dir", "owner": username, "mode": "000",
             "children": lockbox_children
         }
@@ -1116,21 +1147,76 @@ def auth_me():
 def index():
     username = session.get("username")
     db.seed_student(username)
-    stage = db.get_student_stage(username)
-    return render_template("index.html", username=username, stage=stage)
+    status = db.get_student_ctf_status(username)
+    stage = status["ctf2_stage"] if status["active_ctf"] == 2 else status["ctf1_stage"]
+    return render_template(
+        "index.html",
+        username=username,
+        stage=stage,
+        active_ctf=status["active_ctf"],
+        ctf1_stage=status["ctf1_stage"],
+        ctf2_stage=status["ctf2_stage"],
+        ctf2_unlocked=status["ctf2_unlocked"]
+    )
+
+
+@app.route("/api/ctf_status", methods=["GET"])
+@login_required
+def get_ctf_status():
+    username = session.get("username", "talaba1")
+    status = db.get_student_ctf_status(username)
+    stage = status["ctf2_stage"] if status["active_ctf"] == 2 else status["ctf1_stage"]
+    return jsonify({
+        "username": username,
+        "active_ctf": status["active_ctf"],
+        "stage": stage,
+        "ctf1_stage": status["ctf1_stage"],
+        "ctf2_stage": status["ctf2_stage"],
+        "ctf2_unlocked": status["ctf2_unlocked"]
+    })
+
+
+@app.route("/api/switch_ctf", methods=["POST"])
+@login_required
+def switch_ctf():
+    data = request.json or {}
+    target_ctf = data.get("ctf", 1)
+    username = session.get("username", "talaba1")
+    res = db.switch_active_ctf(username, target_ctf)
+    if not res["ok"]:
+        return jsonify(res), 403
+    sync_fs(username)
+    status = db.get_student_ctf_status(username)
+    stage = status["ctf2_stage"] if status["active_ctf"] == 2 else status["ctf1_stage"]
+    return jsonify({
+        "ok": True,
+        "active_ctf": status["active_ctf"],
+        "stage": stage,
+        "ctf1_stage": status["ctf1_stage"],
+        "ctf2_stage": status["ctf2_stage"],
+        "ctf2_unlocked": status["ctf2_unlocked"]
+    })
 
 
 @app.route("/api/status", methods=["GET"])
 @login_required
 def get_status():
     username = session.get("username", "talaba1")
-    stage = db.get_student_stage(username)
-    quiz_info = QUIZZES.get(stage, {"title": "Tugallangan", "description": "Barcha 20 ta bosqich (CTF 1 va CTF 2) muvaffaqiyatli topshirildi!"})
+    status = db.get_student_ctf_status(username)
+    active_ctf = status["active_ctf"]
+    stage = status["ctf2_stage"] if active_ctf == 2 else status["ctf1_stage"]
+    quiz_dict = QUIZZES_CTF2 if active_ctf == 2 else QUIZZES_CTF1
+    quiz_info = quiz_dict.get(stage, {
+        "title": "Tugallangan",
+        "description": "Barcha 10 ta bosqich muvaffaqiyatli topshirildi!"
+    })
     return jsonify({
         "username": username,
+        "active_ctf": active_ctf,
         "current_stage": stage,
         "quiz": quiz_info,
-        "completed": stage > 20
+        "completed": stage > 10,
+        "status": status
     })
 
 
@@ -1187,207 +1273,202 @@ def save_file():
 @login_required
 def check_quiz():
     username = session.get("username", "talaba1")
-    stage = db.get_student_stage(username)
+    ctf_status = db.get_student_ctf_status(username)
+    active_ctf = ctf_status["active_ctf"]
+    stage = ctf_status["ctf2_stage"] if active_ctf == 2 else ctf_status["ctf1_stage"]
     fs = get_fs(username)
 
-    if stage > 20:
+    if stage > 10:
+        ctf_label = "CTF 1 (Linux Asoslari)" if active_ctf == 1 else "CTF 2 (Ilg'or Kiberxavfsizlik)"
         return jsonify({
             "status": "pass",
             "stage": stage,
-            "message": "🎉 Siz barcha 20 ta bosqichni (CTF 1 va CTF 2) to'liq tugatgansiz! Leaderboard'dan flagingizni ko'ring."
+            "message": f"🎉 Siz {ctf_label} ning barcha 10 ta bosqichini to'liq tugatgansiz! Leaderboard'dan o'z flagingizni ko'rishingiz mumkin."
         })
 
     passed = False
 
-    # ── CTF 1 Checks (1-10) ──────────────────────────────────
-    # quiz1: images, docs, documents papkalari mavjudligi
-    if stage == 1:
-        d1 = f"/home/{username}/quiz1/images"
-        d2 = f"/home/{username}/quiz1/docs"
-        d3 = f"/home/{username}/quiz1/documents"
-        if (d1 in fs and fs[d1]["type"] == "dir" and
-                d2 in fs and fs[d2]["type"] == "dir" and
-                d3 in fs and fs[d3]["type"] == "dir"):
-            passed = True
-
-    # quiz2: docs/notes.txt va docs/todo.txt mavjudligi
-    elif stage == 2:
-        f1 = f"/home/{username}/quiz2/docs/notes.txt"
-        f2 = f"/home/{username}/quiz2/docs/todo.txt"
-        if (f1 in fs and fs[f1]["type"] == "file" and
-                f2 in fs and fs[f2]["type"] == "file"):
-            passed = True
-
-    # quiz3: notes.txt ichida "linux200" bor
-    elif stage == 3:
-        f = f"/home/{username}/quiz3/notes.txt"
-        if f in fs and fs[f]["type"] == "file" and "linux200" in fs[f]["content"]:
-            passed = True
-
-    # quiz4: answer.txt ichida KEY-... qiymati to'g'ri
-    elif stage == 4:
-        f = f"/home/{username}/quiz4/answer.txt"
-        expected = db.get_student_answers(username).get(4, "")
-        if f in fs and fs[f]["type"] == "file":
-            given = fs[f]["content"].strip().replace(" ", "").replace("\n", "")
-            if given == expected:
+    if active_ctf == 1:
+        # ── CTF 1 Checks (1-10) ──────────────────────────────────
+        if stage == 1:
+            d1 = f"/home/{username}/quiz1/images"
+            d2 = f"/home/{username}/quiz1/docs"
+            d3 = f"/home/{username}/quiz1/documents"
+            if (d1 in fs and fs[d1]["type"] == "dir" and
+                    d2 in fs and fs[d2]["type"] == "dir" and
+                    d3 in fs and fs[d3]["type"] == "dir"):
                 passed = True
 
-    # quiz5: answer.txt ichida PASS-... qiymati to'g'ri
-    elif stage == 5:
-        f = f"/home/{username}/quiz5/answer.txt"
-        expected = db.get_student_answers(username).get(5, "")
-        if f in fs and fs[f]["type"] == "file":
-            given = fs[f]["content"].strip().replace(" ", "").replace("\n", "")
-            if given == expected:
+        elif stage == 2:
+            f1 = f"/home/{username}/quiz2/docs/notes.txt"
+            f2 = f"/home/{username}/quiz2/docs/todo.txt"
+            if (f1 in fs and fs[f1]["type"] == "file" and
+                    f2 in fs and fs[f2]["type"] == "file"):
                 passed = True
 
-    # quiz6: temp1, temp2, junk o'chirilgan; required.txt saqlanib qolgan
-    elif stage == 6:
-        req = f"/home/{username}/quiz6/required.txt"
-        t1 = f"/home/{username}/quiz6/temp1.txt"
-        t2 = f"/home/{username}/quiz6/temp2.txt"
-        junk = f"/home/{username}/quiz6/junk"
-        if req in fs and t1 not in fs and t2 not in fs and junk not in fs:
-            passed = True
-
-    # quiz7: script.sh executable va done.txt mavjud
-    elif stage == 7:
-        s = f"/home/{username}/quiz7/script.sh"
-        d = f"/home/{username}/quiz7/done.txt"
-        mode = fs.get(s, {}).get("mode", "644")
-        is_exec = ("x" in mode or mode in ("755", "777", "775", "111"))
-        if s in fs and is_exec and d in fs and fs[d]["type"] == "file":
-            passed = True
-
-    # quiz8: secret.txt egasi talaba username ga o'zgargan
-    elif stage == 8:
-        sec = f"/home/{username}/quiz8/secret.txt"
-        if sec in fs and fs[sec]["owner"] == username:
-            passed = True
-
-    # quiz9: answer.txt ichida PART-... qiymati to'g'ri
-    elif stage == 9:
-        f = f"/home/{username}/quiz9/answer.txt"
-        expected = db.get_student_answers(username).get(9, "")
-        if f in fs and fs[f]["type"] == "file":
-            given = fs[f]["content"].strip().replace(" ", "").replace("\n", "")
-            if given == expected:
+        elif stage == 3:
+            f = f"/home/{username}/quiz3/notes.txt"
+            if f in fs and fs[f]["type"] == "file" and "linux200" in fs[f]["content"]:
                 passed = True
 
-    # quiz10: final.sh executable va result.txt mavjud
-    elif stage == 10:
-        fin = f"/home/{username}/quiz10/final.sh"
-        res = f"/home/{username}/quiz10/result.txt"
-        mode = fs.get(fin, {}).get("mode", "644")
-        is_exec = ("x" in mode or mode in ("755", "777", "775", "111"))
-        if fin in fs and is_exec and res in fs and fs[res]["type"] == "file":
-            passed = True
+        elif stage == 4:
+            f = f"/home/{username}/quiz4/answer.txt"
+            expected = db.get_student_answers(username).get(4, "")
+            if f in fs and fs[f]["type"] == "file":
+                given = fs[f]["content"].strip().replace(" ", "").replace("\n", "")
+                if given == expected:
+                    passed = True
 
-    # ── CTF 2 Checks (11-20) ─────────────────────────────────
-    # quiz11: secret_zone papkasiga execute ruxsati berilgan va .secret_flag kaliti ko'chirilgan
-    elif stage == 11:
-        f = f"/home/{username}/quiz11/answer.txt"
-        expected = db.get_student_answers(username).get(11, "")
-        mode_dir = fs.get(f"/home/{username}/quiz11/secret_zone", {}).get("mode", "000")
-        has_exec = ("x" in mode_dir or mode_dir in ("755", "777", "775", "111", "555"))
-        if f in fs and fs[f]["type"] == "file" and has_exec:
-            given = fs[f]["content"].strip().replace(" ", "").replace("\n", "")
-            if given == expected:
+        elif stage == 5:
+            f = f"/home/{username}/quiz5/answer.txt"
+            expected = db.get_student_answers(username).get(5, "")
+            if f in fs and fs[f]["type"] == "file":
+                given = fs[f]["content"].strip().replace(" ", "").replace("\n", "")
+                if given == expected:
+                    passed = True
+
+        elif stage == 6:
+            req = f"/home/{username}/quiz6/required.txt"
+            t1 = f"/home/{username}/quiz6/temp1.txt"
+            t2 = f"/home/{username}/quiz6/temp2.txt"
+            junk = f"/home/{username}/quiz6/junk"
+            if req in fs and t1 not in fs and t2 not in fs and junk not in fs:
                 passed = True
 
-    # quiz12: confidential.txt ga read ruxsati berilgan va kalit ko'chirilgan
-    elif stage == 12:
-        f = f"/home/{username}/quiz12/answer.txt"
-        expected = db.get_student_answers(username).get(12, "")
-        mode_file = fs.get(f"/home/{username}/quiz12/confidential.txt", {}).get("mode", "200")
-        has_read = ("r" in mode_file or mode_file in ("644", "755", "777", "444", "666"))
-        if f in fs and fs[f]["type"] == "file" and has_read:
-            given = fs[f]["content"].strip().replace(" ", "").replace("\n", "")
-            if given == expected:
+        elif stage == 7:
+            s = f"/home/{username}/quiz7/script.sh"
+            d = f"/home/{username}/quiz7/done.txt"
+            mode = fs.get(s, {}).get("mode", "644")
+            is_exec = ("x" in mode or mode in ("755", "777", "775", "111"))
+            if s in fs and is_exec and d in fs and fs[d]["type"] == "file":
                 passed = True
 
-    # quiz13: mixed_words.txt dan to'liq so'z BiGs0Z... topilgan
-    elif stage == 13:
-        f = f"/home/{username}/quiz13/answer.txt"
-        expected = db.get_student_answers(username).get(13, "")
-        if f in fs and fs[f]["type"] == "file":
-            given = fs[f]["content"].strip().replace(" ", "").replace("\n", "")
-            if expected in given:
+        elif stage == 8:
+            sec = f"/home/{username}/quiz8/secret.txt"
+            if sec in fs and fs[sec]["owner"] == username:
                 passed = True
 
-    # quiz14: server_log.txt dan auth_token topilgan
-    elif stage == 14:
-        f = f"/home/{username}/quiz14/answer.txt"
-        expected = db.get_student_answers(username).get(14, "")
-        if f in fs and fs[f]["type"] == "file":
-            given = fs[f]["content"].strip().replace(" ", "").replace("\n", "")
-            if expected in given:
+        elif stage == 9:
+            f = f"/home/{username}/quiz9/answer.txt"
+            expected = db.get_student_answers(username).get(9, "")
+            if f in fs and fs[f]["type"] == "file":
+                given = fs[f]["content"].strip().replace(" ", "").replace("\n", "")
+                if given == expected:
+                    passed = True
+
+        elif stage == 10:
+            fin = f"/home/{username}/quiz10/final.sh"
+            res = f"/home/{username}/quiz10/result.txt"
+            mode = fs.get(fin, {}).get("mode", "644")
+            is_exec = ("x" in mode or mode in ("755", "777", "775", "111"))
+            if fin in fs and is_exec and res in fs and fs[res]["type"] == "file":
                 passed = True
 
-    # quiz15: storage/ dan 1024 baytli fayl kaliti topilgan
-    elif stage == 15:
-        f = f"/home/{username}/quiz15/answer.txt"
-        expected = db.get_student_answers(username).get(15, "")
-        if f in fs and fs[f]["type"] == "file":
-            given = fs[f]["content"].strip().replace(" ", "").replace("\n", "")
-            if expected in given:
-                passed = True
+    else:
+        # ── CTF 2 Checks (1-10) ──────────────────────────────────
+        # quiz1: secret_zone papkasiga execute ruxsati berilgan va .secret_flag kaliti ko'chirilgan
+        if stage == 1:
+            f = f"/home/{username}/quiz1/answer.txt"
+            expected = db.get_student_answers(username).get(11, "")
+            mode_dir = fs.get(f"/home/{username}/quiz1/secret_zone", {}).get("mode", "000")
+            has_exec = ("x" in mode_dir or mode_dir in ("755", "777", "775", "111", "555"))
+            if f in fs and fs[f]["type"] == "file" and has_exec:
+                given = fs[f]["content"].strip().replace(" ", "").replace("\n", "")
+                if given == expected:
+                    passed = True
 
-    # quiz16: restricted/ dan 777 ruxsatli fayl kaliti topilgan
-    elif stage == 16:
-        f = f"/home/{username}/quiz16/answer.txt"
-        expected = db.get_student_answers(username).get(16, "")
-        if f in fs and fs[f]["type"] == "file":
-            given = fs[f]["content"].strip().replace(" ", "").replace("\n", "")
-            if expected in given:
-                passed = True
+        # quiz2: confidential.txt ga read ruxsati berilgan va kalit ko'chirilgan
+        elif stage == 2:
+            f = f"/home/{username}/quiz2/answer.txt"
+            expected = db.get_student_answers(username).get(12, "")
+            mode_file = fs.get(f"/home/{username}/quiz2/confidential.txt", {}).get("mode", "200")
+            has_read = ("r" in mode_file or mode_file in ("644", "755", "777", "444", "666"))
+            if f in fs and fs[f]["type"] == "file" and has_read:
+                given = fs[f]["content"].strip().replace(" ", "").replace("\n", "")
+                if given == expected:
+                    passed = True
 
-    # quiz17: archive/ dan oddiy fayl kaliti topilgan
-    elif stage == 17:
-        f = f"/home/{username}/quiz17/answer.txt"
-        expected = db.get_student_answers(username).get(17, "")
-        if f in fs and fs[f]["type"] == "file":
-            given = fs[f]["content"].strip().replace(" ", "").replace("\n", "")
-            if expected in given:
-                passed = True
+        # quiz3: mixed_words.txt dan to'liq so'z BiGs0Z... topilgan
+        elif stage == 3:
+            f = f"/home/{username}/quiz3/answer.txt"
+            expected = db.get_student_answers(username).get(13, "")
+            if f in fs and fs[f]["type"] == "file":
+                given = fs[f]["content"].strip().replace(" ", "").replace("\n", "")
+                if expected in given:
+                    passed = True
 
-    # quiz18: lines.txt da TARGET_SECRET nechanchi qatorda ekani (345)
-    elif stage == 18:
-        f = f"/home/{username}/quiz18/answer.txt"
-        if f in fs and fs[f]["type"] == "file":
-            given = fs[f]["content"].strip().replace(" ", "").replace("\n", "")
-            if given == "345":
-                passed = True
+        # quiz4: server_log.txt dan auth_token topilgan
+        elif stage == 4:
+            f = f"/home/{username}/quiz4/answer.txt"
+            expected = db.get_student_answers(username).get(14, "")
+            if f in fs and fs[f]["type"] == "file":
+                given = fs[f]["content"].strip().replace(" ", "").replace("\n", "")
+                if expected in given:
+                    passed = True
 
-    # quiz19: cleanup/ dan bo'sh bo'lmagan fayl kaliti topilgan
-    elif stage == 19:
-        f = f"/home/{username}/quiz19/answer.txt"
-        expected = db.get_student_answers(username).get(19, "")
-        if f in fs and fs[f]["type"] == "file":
-            given = fs[f]["content"].strip().replace(" ", "").replace("\n", "")
-            if expected in given:
-                passed = True
+        # quiz5: storage/ dan 1024 baytli fayl kaliti topilgan
+        elif stage == 5:
+            f = f"/home/{username}/quiz5/answer.txt"
+            expected = db.get_student_answers(username).get(15, "")
+            if f in fs and fs[f]["type"] == "file":
+                given = fs[f]["content"].strip().replace(" ", "").replace("\n", "")
+                if expected in given:
+                    passed = True
 
-    # quiz20: lockbox ruxsati ochilgan va final kalit topilgan
-    elif stage == 20:
-        f = f"/home/{username}/quiz20/answer.txt"
-        expected = db.get_student_answers(username).get(20, "")
-        mode_box = fs.get(f"/home/{username}/quiz20/lockbox", {}).get("mode", "000")
-        has_exec = ("x" in mode_box or mode_box in ("755", "777", "775", "111", "555"))
-        if f in fs and fs[f]["type"] == "file" and has_exec:
-            given = fs[f]["content"].strip().replace(" ", "").replace("\n", "")
-            if expected in given:
-                passed = True
+        # quiz6: restricted/ dan 777 ruxsatli fayl kaliti topilgan
+        elif stage == 6:
+            f = f"/home/{username}/quiz6/answer.txt"
+            expected = db.get_student_answers(username).get(16, "")
+            if f in fs and fs[f]["type"] == "file":
+                given = fs[f]["content"].strip().replace(" ", "").replace("\n", "")
+                if expected in given:
+                    passed = True
+
+        # quiz7: archive/ dan oddiy fayl kaliti topilgan
+        elif stage == 7:
+            f = f"/home/{username}/quiz7/answer.txt"
+            expected = db.get_student_answers(username).get(17, "")
+            if f in fs and fs[f]["type"] == "file":
+                given = fs[f]["content"].strip().replace(" ", "").replace("\n", "")
+                if expected in given:
+                    passed = True
+
+        # quiz8: lines.txt da TARGET_SECRET nechanchi qatorda ekani (345)
+        elif stage == 8:
+            f = f"/home/{username}/quiz8/answer.txt"
+            if f in fs and fs[f]["type"] == "file":
+                given = fs[f]["content"].strip().replace(" ", "").replace("\n", "")
+                if given == "345":
+                    passed = True
+
+        # quiz9: cleanup/ dan bo'sh bo'lmagan fayl kaliti topilgan
+        elif stage == 9:
+            f = f"/home/{username}/quiz9/answer.txt"
+            expected = db.get_student_answers(username).get(19, "")
+            if f in fs and fs[f]["type"] == "file":
+                given = fs[f]["content"].strip().replace(" ", "").replace("\n", "")
+                if expected in given:
+                    passed = True
+
+        # quiz10: lockbox ruxsati ochilgan va final kalit topilgan
+        elif stage == 10:
+            f = f"/home/{username}/quiz10/answer.txt"
+            expected = db.get_student_answers(username).get(20, "")
+            mode_box = fs.get(f"/home/{username}/quiz10/lockbox", {}).get("mode", "000")
+            has_exec = ("x" in mode_box or mode_box in ("755", "777", "775", "111", "555"))
+            if f in fs and fs[f]["type"] == "file" and has_exec:
+                given = fs[f]["content"].strip().replace(" ", "").replace("\n", "")
+                if expected in given:
+                    passed = True
 
     if passed:
-        db.log_attempt(username, stage, "pass")
+        db.log_attempt(username, stage, "pass", ctf=active_ctf)
         next_stage = stage + 1
         db.update_student_stage(username, next_stage)
         sync_fs(username)
 
         # CTF 1 yakunlangan holat (Stage 10 muvaffaqiyatli topshirildi)
-        if stage == 10:
+        if active_ctf == 1 and stage == 10:
             secret1 = "CTF1_SECRET_KEY_2026"
             flag1_hash = hashlib.sha256(f"{username}{secret1}".encode()).hexdigest()[:20]
             flag1 = f"CTF1{{{flag1_hash}}}"
@@ -1395,48 +1476,49 @@ def check_quiz():
             return jsonify({
                 "status": "pass",
                 "next_stage": 11,
+                "ctf1_completed": True,
+                "ctf2_unlocked": True,
                 "message": (
                     "========================================================\n"
                     "🎉🎉🎉 TABRIKLAYMIZ! SIZ CTF 1'NI TO'LIQ TUGATDINGIZ! 🎉🎉🎉\n"
                     f"Sizning 1-bosqich flag'ingiz:\n\n"
                     f"    {flag1}\n\n"
-                    "🔥 SIZGA CTF 2 (11-20 BOSQICHLAR) OCHILDI!\n"
-                    "Endi chuqurroq parametrlar va jiddiyroq tahlil kutmoqda.\n\n"
-                    "➡️  O'tish uchun: cd ~/quiz11\n"
-                    "📋 Vazifani ko'rish uchun: cat ~/quiz11/README.txt\n"
+                    "🔓 SIZGA CTF 2 (ILG'OR KIBERXAVFSIZLIK) OCHILDI!\n"
+                    "Yuqoridagi menyudan '🛡️ CTF 2' tugmasini bosing yoki\n"
+                    "terminalda 'ctf2' deb yozib, 2-bosqichlarni boshlang!\n"
                     "========================================================"
                 )
             })
 
-        # CTF 2 yakunlangan holat (Stage 20 muvaffaqiyatli topshirildi)
-        elif stage == 20:
+        # CTF 2 yakunlangan holat (Stage 10 muvaffaqiyatli topshirildi)
+        elif active_ctf == 2 and stage == 10:
             secret2 = "CTF2_SECRET_KEY_2026"
             flag2_hash = hashlib.sha256(f"{username}{secret2}".encode()).hexdigest()[:20]
             flag2 = f"CTF2{{{flag2_hash}}}"
             db.save_student_flag(username, flag2, level=2)
             return jsonify({
                 "status": "completed",
-                "next_stage": 21,
+                "next_stage": 11,
                 "message": (
-                    "========================================================\n"
-                    "🏆🏆🏆 TABRIKLAYMIZ! SIZ CTF 1 VA CTF 2 NI TUGATDINGIZ! 🏆🏆🏆\n"
-                    f"Sizning CTF 2 flag'ingiz:\n\n"
+                    "====================================================================\n"
+                    "👑👑👑 SIZ CTF 2'NI VA BUTUN CTF PLATFORMASINI TO'LIQ ZABT ETDINGIZ! 👑👑👑\n"
+                    f"Sizning Final CTF 2 Flag'ingiz:\n\n"
                     f"    {flag2}\n\n"
-                    "Siz barcha 20 ta bosqichni a'lo darajada bajardingiz!\n"
-                    "Ushbu flaglarni o'qituvchingizga topshiring.\n"
-                    "========================================================"
+                    "🏆 Siz haqiqiy Linux va Kiberxavfsizlik Mutaxassisisiz!\n"
+                    "Leaderboard sahifasida o'z natijangizni ko'ring.\n"
+                    "===================================================================="
                 )
             })
 
         else:
-            ctf_num = 1 if next_stage <= 10 else 2
+            ctf_num = 1 if active_ctf == 1 else 2
             return jsonify({
                 "status": "pass",
                 "next_stage": next_stage,
                 "message": (
                     "========================================================\n"
-                    f"✅ TABRIKLAYMIZ! quiz{stage} muvaffaqiyatli bajarildi.\n"
-                    f"🔓 quiz{next_stage} (CTF {ctf_num}) ochildi!\n"
+                    f"✅ TABRIKLAYMIZ! quiz{stage} muvaffaqiyatli bajarildi (CTF {ctf_num}).\n"
+                    f"🔓 quiz{next_stage} ochildi!\n"
                     f"➡️  O'tish uchun: cd ~/quiz{next_stage}\n"
                     f"📋 Vazifani ko'rish uchun: cat ~/quiz{next_stage}/README.txt\n"
                     "========================================================"
@@ -1444,9 +1526,10 @@ def check_quiz():
             })
 
     else:
-        db.log_attempt(username, stage, "fail")
-        fail_count = db.get_stage_fail_count(username, stage)
-        hints_for_stage = HINTS.get(stage, {})
+        db.log_attempt(username, stage, "fail", ctf=active_ctf)
+        fail_count = db.get_stage_fail_count(username, stage, ctf=active_ctf)
+        hints_dict = HINTS_CTF2 if active_ctf == 2 else HINTS_CTF1
+        hints_for_stage = hints_dict.get(stage, {})
 
         if fail_count <= 3:
             msg = (
@@ -1512,7 +1595,7 @@ def autocomplete_terminal():
         return posixpath.normpath(p)
 
     cmds = ["ls", "cd", "mkdir", "touch", "nano", "cat", "head", "tail", "rm",
-            "chmod", "chown", "check", "status", "clear", "help", "whoami", "pwd", "sudo", "find", "grep", "echo"]
+            "chmod", "chown", "check", "status", "clear", "help", "whoami", "pwd", "sudo", "find", "grep", "echo", "ctf1", "ctf2"]
 
     tokens = text.split()
     is_trailing_space = text.endswith(" ")
@@ -1580,6 +1663,17 @@ def execute_command():
     if cmd == "clear":
         return jsonify({"output": "__CLEAR__", "cwd": cwd})
 
+    elif cmd in ("ctf1", "ctf2"):
+        target_ctf = 1 if cmd == "ctf1" else 2
+        res = db.switch_active_ctf(username, target_ctf)
+        if not res["ok"]:
+            output = res["error"]
+        else:
+            sync_fs(username)
+            cwd = f"/home/{username}"
+            label = "CTF 1 (Linux Asoslari)" if target_ctf == 1 else "CTF 2 (Ilg'or Kiberxavfsizlik)"
+            output = f"🔄 {label} moduliga muvaffaqiyatli o'tildi!\n💡 Boshlash: cd ~/quiz1 && cat README.txt"
+
     elif cmd == "pwd":
         output = cwd
 
@@ -1605,15 +1699,29 @@ def execute_command():
             "  echo <text> > <file>        - faylga matn yozadi\n"
             "  check                       - bosqichni tekshirish\n"
             "  status                      - joriy bosqich ma'lumotlari\n"
+            "  ctf1 / ctf2                 - CTF 1 yoki CTF 2 moduliga o'tish\n"
             "  clear                       - ekranni tozalash"
         )
 
     elif cmd == "status":
-        quiz_info = QUIZZES.get(stage, {})
+        ctf_status = db.get_student_ctf_status(username)
+        active_ctf = ctf_status["active_ctf"]
+        stage = ctf_status["ctf2_stage"] if active_ctf == 2 else ctf_status["ctf1_stage"]
+        ctf_name = "CTF 1: Linux Asoslari" if active_ctf == 1 else "CTF 2: Ilg'or Tizim & Kiberxavfsizlik"
+        quiz_dict = QUIZZES_CTF2 if active_ctf == 2 else QUIZZES_CTF1
+        quiz_info = quiz_dict.get(stage, {
+            "title": "Tugallangan",
+            "description": "Barcha 10 ta bosqich muvaffaqiyatli topshirildi!",
+            "guide": ""
+        })
+        fail_cnt = db.get_stage_fail_count(username, stage, ctf=active_ctf)
+        stage_str = f"quiz{stage}/10" if stage <= 10 else "Tugallandi! 🏆"
         output = (
             f"👤 Foydalanuvchi: {username}\n"
-            f"🏆 Joriy bosqich: quiz{stage}\n"
+            f"🛡️ Modul: {ctf_name}\n"
+            f"🏆 Joriy bosqich: {stage_str}\n"
             f"🎯 Mavzu: {quiz_info.get('title', 'Tugallangan')}\n"
+            f"⚠️ Noto'g'ri urinishlar: {fail_cnt}\n"
             f"💡 Tavsif: {quiz_info.get('description', '')}\n"
             f"📋 Ko'rish: {quiz_info.get('guide', '')}"
         )
