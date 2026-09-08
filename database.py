@@ -173,6 +173,58 @@ def init_db():
         if conn.is_pg:
             conn.rollback()
 
+    # Sync data from SQLite (ctf.db) to PostgreSQL if running with PostgreSQL
+    if conn.is_pg and os.path.exists(DB_PATH):
+        try:
+            import sqlite3
+            sq_conn = sqlite3.connect(DB_PATH)
+            sq_conn.row_factory = sqlite3.Row
+            sq_cur = sq_conn.cursor()
+
+            # 1. users
+            sq_cur.execute("SELECT username, password_hash, created_at FROM users")
+            for u in sq_cur.fetchall():
+                cursor.execute(
+                    "INSERT INTO users (username, password_hash, created_at) VALUES (?, ?, ?) ON CONFLICT (username) DO NOTHING;",
+                    (u["username"], u["password_hash"], u["created_at"])
+                )
+
+            # 2. progress
+            sq_cur.execute("SELECT username, current_stage, ctf1_stage, ctf2_stage, active_ctf, created_at, updated_at FROM progress")
+            for p in sq_cur.fetchall():
+                c1 = p["ctf1_stage"] if p["ctf1_stage"] else (11 if p["current_stage"] > 10 else p["current_stage"])
+                c2 = p["ctf2_stage"] if p["ctf2_stage"] else 1
+                act = p["active_ctf"] if p["active_ctf"] else 1
+                cursor.execute("""
+                    INSERT INTO progress (username, current_stage, ctf1_stage, ctf2_stage, active_ctf, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                    ON CONFLICT (username) DO UPDATE 
+                    SET ctf1_stage = CASE WHEN progress.ctf1_stage < EXCLUDED.ctf1_stage THEN EXCLUDED.ctf1_stage ELSE progress.ctf1_stage END,
+                        current_stage = CASE WHEN progress.current_stage < EXCLUDED.current_stage THEN EXCLUDED.current_stage ELSE progress.current_stage END;
+                """, (p["username"], p["current_stage"], c1, c2, act, p["created_at"], p["updated_at"]))
+
+            # 3. answers
+            sq_cur.execute("SELECT username, stage, expected FROM answers")
+            for a in sq_cur.fetchall():
+                cursor.execute(
+                    "INSERT INTO answers (username, stage, expected) VALUES (?, ?, ?) ON CONFLICT (username, stage) DO NOTHING;",
+                    (a["username"], a["stage"], a["expected"])
+                )
+
+            # 4. flags
+            sq_cur.execute("SELECT username, flag, created_at FROM flags")
+            for f in sq_cur.fetchall():
+                cursor.execute(
+                    "INSERT INTO flags (username, flag, created_at) VALUES (?, ?, ?) ON CONFLICT (username) DO UPDATE SET flag = EXCLUDED.flag;",
+                    (f["username"], f["flag"], f["created_at"])
+                )
+
+            conn.commit()
+            sq_conn.close()
+        except Exception:
+            if conn.is_pg:
+                conn.rollback()
+
     conn.close()
 
 
