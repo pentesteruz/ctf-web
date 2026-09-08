@@ -122,6 +122,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (data.output === "__CLEAR__") {
         termOutputBuffer.innerHTML = "";
       } else if (data.output) {
+        const out = data.output;
         // Output may be multi-line — render each line with tailored color
         out.split("\n").forEach(line => {
           let lineColor = null;
