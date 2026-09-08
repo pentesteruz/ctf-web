@@ -29,8 +29,17 @@ class DBWrapper:
     def commit(self):
         self.conn.commit()
 
+    def rollback(self):
+        try:
+            self.conn.rollback()
+        except Exception:
+            pass
+
     def close(self):
-        self.conn.close()
+        try:
+            self.conn.close()
+        except Exception:
+            pass
 
 
 class CursorWrapper:
@@ -75,6 +84,7 @@ def init_db():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
     """)
+    conn.commit()
 
     # Progress table
     cursor.execute("""
@@ -88,6 +98,7 @@ def init_db():
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
     """)
+    conn.commit()
 
     # Attempts table
     cursor.execute("""
@@ -100,6 +111,7 @@ def init_db():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
     """)
+    conn.commit()
 
     # Answers table
     cursor.execute("""
@@ -110,6 +122,7 @@ def init_db():
             PRIMARY KEY (username, stage)
         );
     """)
+    conn.commit()
 
     # Flags table
     cursor.execute("""
@@ -119,24 +132,33 @@ def init_db():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
     """)
+    conn.commit()
 
     # Migration for existing tables
-    try:
-        cursor.execute("ALTER TABLE progress ADD COLUMN ctf1_stage INTEGER DEFAULT 1;")
-    except Exception:
-        pass
-    try:
-        cursor.execute("ALTER TABLE progress ADD COLUMN ctf2_stage INTEGER DEFAULT 1;")
-    except Exception:
-        pass
-    try:
-        cursor.execute("ALTER TABLE progress ADD COLUMN active_ctf INTEGER DEFAULT 1;")
-    except Exception:
-        pass
-    try:
-        cursor.execute("ALTER TABLE attempts ADD COLUMN ctf_id INTEGER DEFAULT 1;")
-    except Exception:
-        pass
+    if conn.is_pg:
+        for q in [
+            "ALTER TABLE progress ADD COLUMN IF NOT EXISTS ctf1_stage INTEGER DEFAULT 1;",
+            "ALTER TABLE progress ADD COLUMN IF NOT EXISTS ctf2_stage INTEGER DEFAULT 1;",
+            "ALTER TABLE progress ADD COLUMN IF NOT EXISTS active_ctf INTEGER DEFAULT 1;",
+            "ALTER TABLE attempts ADD COLUMN IF NOT EXISTS ctf_id INTEGER DEFAULT 1;"
+        ]:
+            try:
+                cursor.execute(q)
+                conn.commit()
+            except Exception:
+                conn.rollback()
+    else:
+        for q in [
+            "ALTER TABLE progress ADD COLUMN ctf1_stage INTEGER DEFAULT 1;",
+            "ALTER TABLE progress ADD COLUMN ctf2_stage INTEGER DEFAULT 1;",
+            "ALTER TABLE progress ADD COLUMN active_ctf INTEGER DEFAULT 1;",
+            "ALTER TABLE attempts ADD COLUMN ctf_id INTEGER DEFAULT 1;"
+        ]:
+            try:
+                cursor.execute(q)
+                conn.commit()
+            except Exception:
+                pass
 
     # Migrate any existing current_stage data
     try:
@@ -146,10 +168,11 @@ def init_db():
                 ctf2_stage = CASE WHEN current_stage > 10 THEN current_stage - 10 ELSE 1 END
             WHERE (ctf1_stage = 1 AND current_stage > 1) OR ctf1_stage IS NULL OR ctf1_stage = 0;
         """)
+        conn.commit()
     except Exception:
-        pass
+        if conn.is_pg:
+            conn.rollback()
 
-    conn.commit()
     conn.close()
 
 
