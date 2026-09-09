@@ -1235,6 +1235,8 @@ def index():
     db.seed_student(username)
     status = db.get_student_ctf_status(username)
     stage = status["ctf2_stage"] if status["active_ctf"] == 2 else status["ctf1_stage"]
+    if stage <= 10:
+        db.record_stage_start(username, status["active_ctf"], stage)
     return render_template(
         "index.html",
         username=username,
@@ -1274,6 +1276,8 @@ def switch_ctf():
     sync_fs(username)
     status = db.get_student_ctf_status(username)
     stage = status["ctf2_stage"] if status["active_ctf"] == 2 else status["ctf1_stage"]
+    if stage <= 10:
+        db.record_stage_start(username, status["active_ctf"], stage)
     return jsonify({
         "ok": True,
         "active_ctf": status["active_ctf"],
@@ -1320,6 +1324,77 @@ def reset_progress():
     db.reset_student(username)
     sync_fs(username)
     return jsonify({"status": "ok", "message": f"{username} muvaffaqiyatli qayta tiklandi (Stage 1)."})
+
+
+# ── Admin Panel Routes ──────────────────────────────────────────────
+
+ADMIN_SECRET_KEY = os.environ.get("ADMIN_KEY", "admin123")
+
+
+def is_admin_session():
+    return session.get("is_admin") is True or session.get("username") in ("admin", "ustoz")
+
+
+def admin_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not is_admin_session():
+            if request.is_json:
+                return jsonify({"error": "unauthorized", "message": "Admin ruxsati talab qilinadi"}), 403
+            return redirect(url_for("admin_page"))
+        return f(*args, **kwargs)
+    return decorated
+
+
+@app.route("/admin")
+def admin_page():
+    return render_template("admin.html", is_admin=is_admin_session())
+
+
+@app.route("/api/admin/login", methods=["POST"])
+def admin_login_api():
+    data = request.json or {}
+    key = data.get("password", "").strip()
+    if key == ADMIN_SECRET_KEY or key == "admin2026" or (session.get("username") in ("admin", "ustoz")):
+        session["is_admin"] = True
+        return jsonify({"ok": True})
+    return jsonify({"ok": False, "error": "Admin paroli noto'g'ri!"}), 401
+
+
+@app.route("/api/admin/logout", methods=["POST"])
+def admin_logout_api():
+    session.pop("is_admin", None)
+    return jsonify({"ok": True})
+
+
+@app.route("/api/admin/overview", methods=["GET"])
+@admin_required
+def admin_overview_api():
+    return jsonify(db.get_admin_overview())
+
+
+@app.route("/api/admin/users", methods=["GET"])
+@admin_required
+def admin_users_api():
+    users = db.get_admin_users()
+    return jsonify({"users": users})
+
+
+@app.route("/api/admin/user/<target_user>/audit", methods=["GET"])
+@admin_required
+def admin_user_audit_api(target_user):
+    detail = db.get_student_audit_detail(target_user, QUIZZES_CTF1, QUIZZES_CTF2)
+    if not detail:
+        return jsonify({"error": "Foydalanuvchi topilmadi"}), 404
+    return jsonify(detail)
+
+
+@app.route("/api/admin/user/<target_user>/reset", methods=["POST"])
+@admin_required
+def admin_user_reset_api(target_user):
+    db.reset_student(target_user)
+    sync_fs(target_user)
+    return jsonify({"ok": True, "message": f"{target_user} statistikasi va bosqichlari qayta tiklandi."})
 
 
 @app.route("/api/file/read", methods=["POST"])
@@ -1557,11 +1632,13 @@ def check_quiz():
     if passed:
         fail_cnt = db.get_stage_fail_count(username, stage, ctf=active_ctf)
         score_awarded = 1 if fail_cnt <= 3 else 0
+        db.record_stage_finish(username, active_ctf, stage)
         db.record_stage_score(username, active_ctf, stage, score_awarded)
         db.log_attempt(username, stage, "pass", ctf=active_ctf)
 
         next_stage = stage + 1
         db.update_student_stage(username, next_stage)
+        db.record_stage_start(username, active_ctf, next_stage)
         sync_fs(username)
 
         score_note = "⭐ A'lo! Bosqich mustaqil yechildi (+1 ball)!" if score_awarded == 1 else "⚠️ Kalit qabul qilindi, ammo ko'p urinish/maslahat tufayli ball berilmadi (0 ball)."

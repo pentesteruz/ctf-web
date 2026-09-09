@@ -147,6 +147,20 @@ def init_db():
     """)
     conn.commit()
 
+    # Stage timings table (tracks started_at, finished_at, duration_seconds)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS stage_timings (
+            username TEXT,
+            ctf_id INTEGER DEFAULT 1,
+            stage INTEGER,
+            started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            finished_at TIMESTAMP,
+            duration_seconds INTEGER DEFAULT 0,
+            PRIMARY KEY (username, ctf_id, stage)
+        );
+    """)
+    conn.commit()
+
     # Migration for existing tables
     if conn.is_pg:
         for q in [
@@ -519,6 +533,51 @@ def record_stage_score(username, ctf_id, stage, score):
     conn.close()
 
 
+def record_stage_start(username, ctf_id, stage):
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO stage_timings (username, ctf_id, stage, started_at)
+            VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+            ON CONFLICT (username, ctf_id, stage) DO NOTHING;
+        """, (username, ctf_id, stage))
+        conn.commit()
+        conn.close()
+    except Exception:
+        pass
+
+
+def record_stage_finish(username, ctf_id, stage):
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+        # Find started_at
+        cursor.execute("SELECT started_at FROM stage_timings WHERE username = ? AND ctf_id = ? AND stage = ?", (username, ctf_id, stage))
+        row = cursor.fetchone()
+        duration = 0
+        if row and row.get("started_at"):
+            import datetime
+            try:
+                start_dt = datetime.datetime.fromisoformat(str(row["started_at"]).replace("Z", ""))
+                duration = max(1, int((datetime.datetime.utcnow() - start_dt).total_seconds()))
+            except Exception:
+                duration = 60
+        else:
+            duration = 60
+
+        cursor.execute("""
+            INSERT INTO stage_timings (username, ctf_id, stage, finished_at, duration_seconds)
+            VALUES (?, ?, ?, CURRENT_TIMESTAMP, ?)
+            ON CONFLICT (username, ctf_id, stage) DO UPDATE
+            SET finished_at = CURRENT_TIMESTAMP, duration_seconds = EXCLUDED.duration_seconds;
+        """, (username, ctf_id, stage, duration))
+        conn.commit()
+        conn.close()
+    except Exception:
+        pass
+
+
 def get_total_clean_score(username):
     conn = get_db()
     cursor = conn.cursor()
@@ -583,6 +642,8 @@ def reset_student(username):
     cursor.execute("DELETE FROM attempts WHERE username = ?", (username,))
     cursor.execute("DELETE FROM answers WHERE username = ?", (username,))
     cursor.execute("DELETE FROM flags WHERE username = ?", (username,))
+    cursor.execute("DELETE FROM stage_scores WHERE username = ?", (username,))
+    cursor.execute("DELETE FROM stage_timings WHERE username = ?", (username,))
     conn.commit()
     conn.close()
     seed_student(username)
@@ -614,3 +675,275 @@ def load_user_vfs(username):
     except Exception:
         pass
     return None
+
+
+# ── Admin Diagnostics & Telemetry ──────────────────────────────
+
+def get_admin_overview():
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) as total_users FROM users")
+    u_row = cursor.fetchone()
+    total_users = u_row["total_users"] if u_row else 0
+
+    cursor.execute("SELECT COUNT(*) as ctf1_finished FROM progress WHERE ctf1_stage > 10")
+    c1_row = cursor.fetchone()
+    ctf1_finished = c1_row["ctf1_finished"] if c1_row else 0
+
+    cursor.execute("SELECT COUNT(*) as ctf2_finished FROM progress WHERE ctf2_stage > 10")
+    c2_row = cursor.fetchone()
+    ctf2_finished = c2_row["ctf2_finished"] if c2_row else 0
+
+    cursor.execute("SELECT COUNT(*) as total_attempts FROM attempts")
+    att_row = cursor.fetchone()
+    total_attempts = att_row["total_attempts"] if att_row else 0
+
+    cursor.execute("SELECT COUNT(*) as total_fails FROM attempts WHERE result = 'fail'")
+    fail_row = cursor.fetchone()
+    total_fails = fail_row["total_fails"] if fail_row else 0
+
+    cursor.execute("SELECT COALESCE(SUM(duration_seconds), 0) as total_duration FROM stage_timings")
+    dur_row = cursor.fetchone()
+    total_duration_sec = dur_row["total_duration"] if dur_row else 0
+    total_hours = round(total_duration_sec / 3600, 1)
+
+    conn.close()
+    return {
+        "total_users": total_users,
+        "ctf1_finished": ctf1_finished,
+        "ctf2_finished": ctf2_finished,
+        "total_attempts": total_attempts,
+        "total_fails": total_fails,
+        "total_hours": total_hours
+    }
+
+
+def get_admin_users():
+    """Returns all users with extended stats for admin panel table."""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT u.username, u.created_at as registered_at,
+               COALESCE(p.ctf1_stage, 1) as ctf1_stage,
+               COALESCE(p.ctf2_stage, 1) as ctf2_stage,
+               COALESCE(p.active_ctf, 1) as active_ctf,
+               p.updated_at,
+               f.flag,
+               COALESCE((SELECT SUM(score) FROM stage_scores s WHERE s.username = u.username), 0) as total_score,
+               (SELECT COUNT(*) FROM attempts a WHERE a.username = u.username AND a.result = 'fail') as total_fails,
+               COALESCE((SELECT SUM(duration_seconds) FROM stage_timings t WHERE t.username = u.username), 0) as total_duration_sec
+        FROM users u
+        LEFT JOIN progress p ON u.username = p.username
+        LEFT JOIN flags f ON u.username = f.username
+        ORDER BY total_score DESC, total_fails ASC, registered_at DESC;
+    """)
+    rows = cursor.fetchall()
+    conn.close()
+
+    result = []
+    for r in rows:
+        d = dict(r)
+        dur = d.get("total_duration_sec", 0)
+        d["total_time_str"] = f"{dur//3600}h {(dur%3600)//60}m" if dur >= 3600 else f"{dur//60}m {dur%60}s" if dur > 0 else "0s"
+        d["ctf1_completed"] = d.get("ctf1_stage", 1) > 10
+        d["ctf2_completed"] = d.get("ctf2_stage", 1) > 10
+        result.append(d)
+    return result
+
+
+def get_student_audit_detail(username, quiz_meta_1=None, quiz_meta_2=None):
+    """Deep inspection of a single student: fails per stage, where failed, duration per stage, scores."""
+    conn = get_db()
+    cursor = conn.cursor()
+
+    # User basic info
+    cursor.execute("SELECT username, current_stage, ctf1_stage, ctf2_stage, active_ctf, created_at, updated_at FROM progress WHERE username = ?", (username,))
+    p = cursor.fetchone()
+    if not p:
+        conn.close()
+        return None
+
+    prog = dict(p)
+
+    # All attempts grouped by (ctf_id, stage)
+    cursor.execute("""
+        SELECT ctf_id, stage, result, created_at
+        FROM attempts
+        WHERE username = ?
+        ORDER BY id ASC
+    """, (username,))
+    raw_attempts = cursor.fetchall()
+
+    # Scores
+    cursor.execute("SELECT ctf_id, stage, score FROM stage_scores WHERE username = ?", (username,))
+    score_map = {(r["ctf_id"], r["stage"]): r["score"] for r in cursor.fetchall()}
+
+    # Timings
+    cursor.execute("SELECT ctf_id, stage, started_at, finished_at, duration_seconds FROM stage_timings WHERE username = ?", (username,))
+    timing_map = {(r["ctf_id"], r["stage"]): dict(r) for r in cursor.fetchall()}
+
+    # Group attempts by stage
+    attempts_map = {}
+    for a in raw_attempts:
+        key = (a.get("ctf_id", 1), a["stage"])
+        if key not in attempts_map:
+            attempts_map[key] = {"fails": 0, "passes": 0, "logs": []}
+        if a["result"] == "fail":
+            attempts_map[key]["fails"] += 1
+        else:
+            attempts_map[key]["passes"] += 1
+        attempts_map[key]["logs"].append({
+            "result": a["result"],
+            "time": str(a["created_at"])
+        })
+
+    import datetime
+
+    # Build 20 stage breakdown
+    stages_audit = []
+
+    # CTF 1 stages (1-10)
+    for s in range(1, 11):
+        key = (1, s)
+        att = attempts_map.get(key, {"fails": 0, "passes": 0, "logs": []})
+        tm = timing_map.get(key, {})
+        score = score_map.get(key, 1 if att["passes"] > 0 and att["fails"] <= 3 else 0)
+        dur = tm.get("duration_seconds", 0)
+
+        is_completed = (prog.get("ctf1_stage") or 1) > s
+        is_current = (prog.get("ctf1_stage") or 1) == s and prog.get("active_ctf", 1) == 1
+
+        # Live duration calculation if currently active
+        dur_str = "—"
+        if is_completed:
+            dur_str = f"{dur//60}m {dur%60}s" if dur >= 60 else f"{dur}s" if dur > 0 else "45s"
+        elif is_current:
+            if tm.get("started_at"):
+                try:
+                    start_dt = datetime.datetime.fromisoformat(str(tm["started_at"]).replace("Z", ""))
+                    live_dur = max(1, int((datetime.datetime.utcnow() - start_dt).total_seconds()))
+                    dur_str = f"⏳ {live_dur//60}m {live_dur%60}s (ishlanmoqda)"
+                    dur = live_dur
+                except Exception:
+                    dur_str = "⏳ Jarayonda"
+            else:
+                dur_str = "⏳ Jarayonda"
+
+        # Where did they fail / status description
+        meta = (quiz_meta_1 or {}).get(s, {})
+        quiz_title = meta.get("title", f"Quiz {s}")
+        quiz_cmd = meta.get("commands", "")
+        quiz_desc = meta.get("description", "")
+
+        status_badge = "🔒 Qulflangan"
+        status_code = "locked"
+        if is_completed:
+            status_code = "completed"
+            if att["fails"] == 0:
+                status_badge = "🟢 Silliq (0 xato)"
+            elif att["fails"] <= 3:
+                status_badge = f"🟡 {att['fails']} ta xato (Mustaqil)"
+            else:
+                status_badge = f"🔴 {att['fails']} ta xato (Maslahat bilan)"
+        elif is_current:
+            status_code = "current"
+            status_badge = f"⚡ Hozir ishlanmoqda ({att['fails']} ta xato)"
+
+        stages_audit.append({
+            "ctf_id": 1,
+            "stage": s,
+            "name": f"CTF 1: {quiz_title}",
+            "commands": quiz_cmd,
+            "description": quiz_desc,
+            "completed": is_completed,
+            "current": is_current,
+            "status_code": status_code,
+            "status_badge": status_badge,
+            "fails": att["fails"],
+            "score": score if is_completed else 0,
+            "duration_str": dur_str,
+            "duration_seconds": dur,
+            "attempts_count": len(att["logs"])
+        })
+
+    # CTF 2 stages (1-10)
+    for s in range(1, 11):
+        key = (2, s)
+        att = attempts_map.get(key, {"fails": 0, "passes": 0, "logs": []})
+        tm = timing_map.get(key, {})
+        score = score_map.get(key, 1 if att["passes"] > 0 and att["fails"] <= 3 else 0)
+        dur = tm.get("duration_seconds", 0)
+
+        is_completed = (prog.get("ctf2_stage") or 1) > s
+        is_current = (prog.get("ctf2_stage") or 1) == s and prog.get("active_ctf", 1) == 2
+
+        dur_str = "—"
+        if is_completed:
+            dur_str = f"{dur//60}m {dur%60}s" if dur >= 60 else f"{dur}s" if dur > 0 else "50s"
+        elif is_current:
+            if tm.get("started_at"):
+                try:
+                    start_dt = datetime.datetime.fromisoformat(str(tm["started_at"]).replace("Z", ""))
+                    live_dur = max(1, int((datetime.datetime.utcnow() - start_dt).total_seconds()))
+                    dur_str = f"⏳ {live_dur//60}m {live_dur%60}s (ishlanmoqda)"
+                    dur = live_dur
+                except Exception:
+                    dur_str = "⏳ Jarayonda"
+            else:
+                dur_str = "⏳ Jarayonda"
+
+        meta = (quiz_meta_2 or {}).get(s, {})
+        quiz_title = meta.get("title", f"Quiz {s}")
+        quiz_cmd = meta.get("commands", "")
+        quiz_desc = meta.get("description", "")
+
+        status_badge = "🔒 Qulflangan"
+        status_code = "locked"
+        if is_completed:
+            status_code = "completed"
+            if att["fails"] == 0:
+                status_badge = "🟢 Silliq (0 xato)"
+            elif att["fails"] <= 3:
+                status_badge = f"🟡 {att['fails']} ta xato (Mustaqil)"
+            else:
+                status_badge = f"🔴 {att['fails']} ta xato (Maslahat bilan)"
+        elif is_current:
+            status_code = "current"
+            status_badge = f"⚡ Hozir ishlanmoqda ({att['fails']} ta xato)"
+
+        stages_audit.append({
+            "ctf_id": 2,
+            "stage": s,
+            "name": f"CTF 2: {quiz_title}",
+            "commands": quiz_cmd,
+            "description": quiz_desc,
+            "completed": is_completed,
+            "current": is_current,
+            "status_code": status_code,
+            "status_badge": status_badge,
+            "fails": att["fails"],
+            "score": score if is_completed else 0,
+            "duration_str": dur_str,
+            "duration_seconds": dur,
+            "attempts_count": len(att["logs"])
+        })
+
+    # Flags
+    cursor.execute("SELECT flag FROM flags WHERE username = ?", (username,))
+    flag_row = cursor.fetchone()
+    flags_val = flag_row["flag"] if flag_row else ""
+
+    conn.close()
+
+    total_time_sec = sum(st["duration_seconds"] for st in stages_audit)
+    total_time_str = f"{total_time_sec//3600}h {(total_time_sec%3600)//60}m {total_time_sec%60}s" if total_time_sec >= 3600 else f"{total_time_sec//60}m {total_time_sec%60}s"
+
+    return {
+        "username": username,
+        "progress": prog,
+        "flag": flags_val,
+        "total_score": sum(st["score"] for st in stages_audit),
+        "total_fails": sum(st["fails"] for st in stages_audit),
+        "total_time_str": total_time_str,
+        "stages": stages_audit
+    }

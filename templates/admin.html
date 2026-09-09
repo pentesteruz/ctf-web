@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🛡️ CTF Boshqaruv & Telemetriya Paneli</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    body {
+      overflow-y: auto !important;
+      height: auto !important;
+      min-height: 100vh;
+      background: #060a12;
+      color: #e2e8f0;
+      font-family: 'Inter', system-ui, sans-serif;
+    }
+    .admin-container {
+      max-width: 1380px;
+      margin: 0 auto;
+      padding: 24px 20px 80px;
+    }
+    .admin-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid rgba(0, 220, 255, 0.2);
+      margin-bottom: 24px;
+    }
+    .admin-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand-icon {
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(135deg, rgba(0, 220, 255, 0.2), rgba(168, 85, 247, 0.3));
+      border: 1px solid #00dcff;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      box-shadow: 0 0 15px rgba(0, 220, 255, 0.3);
+    }
+    .brand-title {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: #ffffff;
+    }
+    .brand-badge {
+      font-size: 11px;
+      font-family: 'JetBrains Mono', monospace;
+      padding: 3px 8px;
+      border-radius: 20px;
+      background: rgba(0, 255, 136, 0.15);
+      border: 1px solid #00ff88;
+      color: #00ff88;
+      font-weight: 600;
+      margin-left: 8px;
+    }
+    .admin-nav {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .btn-admin {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-decoration: none;
+      border: none;
+    }
+    .btn-outline {
+      background: rgba(255, 255, 255, 0.05);
+      color: #94a3b8;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+    .btn-outline:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+    }
+    .btn-cyan {
+      background: rgba(0, 220, 255, 0.15);
+      color: #00dcff;
+      border: 1px solid #00dcff;
+    }
+    .btn-cyan:hover {
+      background: rgba(0, 220, 255, 0.25);
+      box-shadow: 0 0 12px rgba(0, 220, 255, 0.3);
+    }
+    .btn-danger-sm {
+      background: rgba(239, 68, 68, 0.15);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      padding: 5px 10px;
+      font-size: 12px;
+      border-radius: 6px;
+    }
+    .btn-danger-sm:hover {
+      background: rgba(239, 68, 68, 0.3);
+    }
+    .btn-audit {
+      background: linear-gradient(135deg, rgba(0, 220, 255, 0.2), rgba(59, 130, 246, 0.25));
+      color: #38bdf8;
+      border: 1px solid #38bdf8;
+      padding: 6px 12px;
+      font-size: 12px;
+      border-radius: 6px;
+    }
+    .btn-audit:hover {
+      background: rgba(0, 220, 255, 0.35);
+      color: #ffffff;
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+    }
+
+    /* KPI Cards */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .kpi-card {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(51, 65, 85, 0.6);
+      border-radius: 12px;
+      padding: 18px 20px;
+      backdrop-filter: blur(10px);
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+    .kpi-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(0, 220, 255, 0.5);
+    }
+    .kpi-title {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #64748b;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .kpi-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: #ffffff;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .kpi-sub {
+      font-size: 12px;
+      color: #94a3b8;
+      margin-top: 4px;
+    }
+
+    /* Main Table Section */
+    .section-card {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(51, 65, 85, 0.6);
+      border-radius: 14px;
+      padding: 20px;
+      backdrop-filter: blur(10px);
+    }
+    .table-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .search-box {
+      position: relative;
+      width: 320px;
+      max-width: 100%;
+    }
+    .search-input {
+      width: 100%;
+      background: rgba(30, 41, 59, 0.8);
+      border: 1px solid rgba(71, 85, 105, 0.8);
+      border-radius: 8px;
+      padding: 9px 12px 9px 36px;
+      color: #fff;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .search-input:focus {
+      border-color: #00dcff;
+      box-shadow: 0 0 10px rgba(0, 220, 255, 0.2);
+    }
+    .search-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #64748b;
+      font-size: 14px;
+    }
+    .table-container {
+      overflow-x: auto;
+    }
+    .custom-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .custom-table th {
+      text-align: left;
+      padding: 12px 14px;
+      background: rgba(30, 41, 59, 0.6);
+      color: #94a3b8;
+      font-weight: 600;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.8);
+      white-space: nowrap;
+    }
+    .custom-table td {
+      padding: 14px;
+      border-bottom: 1px solid rgba(30, 41, 59, 0.8);
+      color: #cbd5e1;
+      vertical-align: middle;
+    }
+    .custom-table tr:hover td {
+      background: rgba(30, 41, 59, 0.4);
+    }
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .badge-success { background: rgba(0, 255, 136, 0.15); color: #00ff88; border: 1px solid rgba(0, 255, 136, 0.3); }
+    .badge-warning { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .badge-danger  { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+    .badge-cyan    { background: rgba(0, 220, 255, 0.15); color: #38bdf8; border: 1px solid rgba(0, 220, 255, 0.3); }
+    .badge-muted   { background: rgba(100, 116, 139, 0.15); color: #94a3b8; border: 1px solid rgba(100, 116, 139, 0.3); }
+
+    /* Modal Backdrop & Dialog */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(2, 6, 23, 0.85);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 16px;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal-content {
+      background: #0b1120;
+      border: 1px solid rgba(0, 220, 255, 0.3);
+      border-radius: 16px;
+      width: 1050px;
+      max-width: 96vw;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(0, 220, 255, 0.15);
+      overflow: hidden;
+      animation: modalFadeIn 0.25s ease-out;
+    }
+    @keyframes modalFadeIn {
+      from { opacity: 0; transform: scale(0.96); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .modal-header {
+      padding: 18px 24px;
+      background: rgba(15, 23, 42, 0.8);
+      border-bottom: 1px solid rgba(51, 65, 85, 0.8);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .modal-user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #00dcff, #a855f7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      color: #040810;
+      font-size: 18px;
+    }
+    .modal-close {
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      font-size: 24px;
+      cursor: pointer;
+      line-height: 1;
+      padding: 4px 8px;
+      border-radius: 6px;
+    }
+    .modal-close:hover { color: #fff; background: rgba(255, 255, 255, 0.1); }
+    .modal-body {
+      padding: 20px 24px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    /* Modal Mini KPIs */
+    .modal-kpi-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+    .modal-kpi-box {
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(51, 65, 85, 0.7);
+      border-radius: 10px;
+      padding: 12px 16px;
+    }
+    .modal-kpi-box .label { font-size: 11px; color: #64748b; text-transform: uppercase; }
+    .modal-kpi-box .val { font-size: 20px; font-weight: 700; font-family: 'JetBrains Mono', monospace; margin-top: 4px; }
+
+    /* Tabs inside modal */
+    .tab-pills {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.8);
+      padding-bottom: 10px;
+    }
+    .tab-pill {
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      background: rgba(30, 41, 59, 0.6);
+      color: #94a3b8;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.2s ease;
+    }
+    .tab-pill.active {
+      background: rgba(0, 220, 255, 0.15);
+      border-color: #00dcff;
+      color: #00dcff;
+    }
+
+    /* Stage Audit Table */
+    .stage-row-current {
+      background: rgba(0, 220, 255, 0.08) !important;
+      border-left: 3px solid #00dcff;
+    }
+    .cmd-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      background: rgba(30, 41, 59, 0.9);
+      color: #38bdf8;
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid rgba(56, 189, 248, 0.3);
+    }
+    .desc-cell {
+      max-width: 320px;
+      font-size: 12px;
+      color: #94a3b8;
+      line-height: 1.4;
+    }
+
+    /* Auth screen */
+    .admin-auth-card {
+      max-width: 440px;
+      margin: 80px auto;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(0, 220, 255, 0.3);
+      border-radius: 16px;
+      padding: 32px;
+      box-shadow: 0 15px 40px rgba(0,0,0,0.7), 0 0 25px rgba(0, 220, 255, 0.12);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="admin-container">
+    {% if not is_admin %}
+      <!-- Admin Login Form -->
+      <div class="admin-auth-card">
+        <div style="font-size: 48px; margin-bottom: 12px;">🛡️</div>
+        <h2 style="color: #fff; font-size: 22px; margin-bottom: 8px;">Admin Kirish</h2>
+        <p style="color: #94a3b8; font-size: 13px; margin-bottom: 24px;">Platformani nazorat qilish va talabalar tahlilini ko'rish uchun maxsus kalitni kiriting</p>
+        
+        <form id="adminLoginForm" onsubmit="handleAdminLogin(event)">
+          <div style="margin-bottom: 18px;">
+            <input type="password" id="adminKeyInput" placeholder="Admin maxfiy paroli" required
+              style="width: 100%; background: #0b1120; border: 1px solid #334155; border-radius: 8px; padding: 12px 16px; color: #fff; font-size: 14px; outline: none;">
+          </div>
+          <div id="loginErrorMsg" style="display: none; color: #f87171; font-size: 12px; margin-bottom: 14px;"></div>
+          <button type="submit" class="btn-admin btn-cyan" style="width: 100%; justify-content: center; padding: 12px; font-size: 14px;">
+            🔓 Tizimga kirish
+          </button>
+        </form>
+        <div style="margin-top: 18px;">
+          <a href="/" style="color: #64748b; font-size: 12px; text-decoration: none;">← Terminalga qaytish</a>
+        </div>
+      </div>
+    {% else %}
+      <!-- Authenticated Admin Dashboard -->
+      <header class="admin-header">
+        <div class="admin-brand">
+          <div class="brand-icon">🛡️</div>
+          <div>
+            <div style="display: flex; align-items: center;">
+              <span class="brand-title">APEX LINUX CTF</span>
+              <span class="brand-badge">ADMIN MONITOR</span>
+            </div>
+            <div style="font-size: 12px; color: #64748b;">Talabalar diagnostikasi, xatolar tahlili va vaqt telemetriyasi</div>
+          </div>
+        </div>
+        <div class="admin-nav">
+          <button onclick="loadOverview(); loadUsers();" class="btn-admin btn-outline">🔄 Yangilash</button>
+          <a href="/" class="btn-admin btn-outline">💻 Terminal</a>
+          <button onclick="handleAdminLogout()" class="btn-admin btn-danger-sm">🚪 Chiqish</button>
+        </div>
+      </header>
+
+      <!-- KPI Summary Cards -->
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-title">
+            <span>👥 Jami Talabalar</span>
+            <span>📊</span>
+          </div>
+          <div class="kpi-value" id="kpiUsers">0</div>
+          <div class="kpi-sub">Ro'yxatdan o'tgan foydalanuvchilar</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-title">
+            <span>🏆 G'oliblar</span>
+            <span>🏁</span>
+          </div>
+          <div class="kpi-value" id="kpiWinners">0 / 0</div>
+          <div class="kpi-sub">CTF 1 (10) / CTF 2 (10) tugatganlar</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-title">
+            <span>❌ Urinishlar & Xatolar</span>
+            <span>⚠️</span>
+          </div>
+          <div class="kpi-value" id="kpiFails" style="color: #f87171;">0</div>
+          <div class="kpi-sub" id="kpiAttemptsSub">0 ta check tekshiruvi</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-title">
+            <span>⏱️ Sarflangan Vaqt</span>
+            <span>⏳</span>
+          </div>
+          <div class="kpi-value" id="kpiHours" style="color: #38bdf8;">0 soat</div>
+          <div class="kpi-sub">Platformada amaliy mashq vaqti</div>
+        </div>
+      </div>
+
+      <!-- Users & Audit Section -->
+      <div class="section-card">
+        <div class="table-toolbar">
+          <div>
+            <h3 style="color: #fff; font-size: 16px; font-weight: 600;">👨‍🎓 Talabalar Ro'yxati va Telemetriyasi</h3>
+            <p style="color: #64748b; font-size: 12px;">Har bir talabaning qayerda xato qilgani va qancha vaqt sarflaganini ko'rish uchun "📊 Tahlil / Audit" tugmasini bosing</p>
+          </div>
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="userSearchInput" class="search-input" placeholder="Username bo'yicha qidirish..." oninput="filterUsers()">
+          </div>
+        </div>
+
+        <div class="table-container">
+          <table class="custom-table" id="usersTable">
+            <thead>
+              <tr>
+                <th style="width: 40px;">#</th>
+                <th>Foydalanuvchi</th>
+                <th>CTF 1 Holati</th>
+                <th>CTF 2 Holati</th>
+                <th>Toza Ball (max 20)</th>
+                <th>Xatolar Soni</th>
+                <th>Sarflangan Vaqt</th>
+                <th>Oxirgi Faollik</th>
+                <th style="text-align: right;">Amallar</th>
+              </tr>
+            </thead>
+            <tbody id="usersTableBody">
+              <tr>
+                <td colspan="9" style="text-align: center; color: #64748b; padding: 24px;">Yuklanmoqda...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Detailed Student Audit Modal -->
+  <div class="modal-overlay" id="auditModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <div class="modal-user-avatar" id="modalAvatar">U</div>
+          <div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <h3 style="color: #fff; font-size: 17px;" id="modalUsername">talaba</h3>
+              <span id="modalActiveBadge" class="badge badge-cyan">CTF 1</span>
+            </div>
+            <div style="font-size: 12px; color: #94a3b8;" id="modalFlagText">Flag: Olinmagan</div>
+          </div>
+        </div>
+        <button class="modal-close" onclick="closeAuditModal()">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Diagnostic Mini KPIs -->
+        <div class="modal-kpi-row">
+          <div class="modal-kpi-box">
+            <div class="label">⭐ To'plangan Toza Ball</div>
+            <div class="val" id="modalScoreVal" style="color: #00ff88;">0 / 20</div>
+          </div>
+          <div class="modal-kpi-box">
+            <div class="label">❌ Jami Xatolar Soni</div>
+            <div class="val" id="modalFailsVal" style="color: #f87171;">0 ta xato</div>
+          </div>
+          <div class="modal-kpi-box">
+            <div class="label">⏱️ Jami Sarflangan Vaqt</div>
+            <div class="val" id="modalTimeVal" style="color: #38bdf8;">0 daqiqa</div>
+          </div>
+        </div>
+
+        <!-- Tabs: CTF 1 vs CTF 2 -->
+        <div class="tab-pills">
+          <button class="tab-pill active" id="pillCtf1" onclick="switchAuditTab(1)">🐧 CTF 1: Linux Asoslari (1-10)</button>
+          <button class="tab-pill" id="pillCtf2" onclick="switchAuditTab(2)">🛡️ CTF 2: Ilg'or Kiberxavfsizlik (1-10)</button>
+        </div>
+
+        <!-- 10 Stages Breakdown Table -->
+        <div class="table-container">
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th style="width: 140px;">Bosqich</th>
+                <th>Topshiriq & Mavzu (Qayerda?)</th>
+                <th style="width: 150px;">Nechi marta xato qilgan?</th>
+                <th style="width: 140px;">Sarflangan Vaqt</th>
+                <th style="width: 100px;">Natija (Ball)</th>
+              </tr>
+            </thead>
+            <tbody id="stageAuditBody">
+              <!-- Dynamically rendered -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let allUsersData = [];
+    let currentAuditData = null;
+    let activeAuditCtf = 1;
+
+    // Login Handler
+    async function handleAdminLogin(e) {
+      e.preventDefault();
+      const key = document.getElementById("adminKeyInput").value.trim();
+      const errEl = document.getElementById("loginErrorMsg");
+      errEl.style.display = "none";
+
+      try {
+        const res = await fetch("/api/admin/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ password: key })
+        });
+        const data = await res.json();
+        if (data.ok) {
+          window.location.reload();
+        } else {
+          errEl.textContent = data.error || "Noto'g'ri parol!";
+          errEl.style.display = "block";
+        }
+      } catch (err) {
+        errEl.textContent = "Server bilan bog'lanishda xatolik!";
+        errEl.style.display = "block";
+      }
+    }
+
+    // Logout Handler
+    async function handleAdminLogout() {
+      await fetch("/api/admin/logout", { method: "POST" });
+      window.location.reload();
+    }
+
+    // Fetch Overview Metrics
+    async function loadOverview() {
+      try {
+        const res = await fetch("/api/admin/overview");
+        if (!res.ok) return;
+        const data = await res.json();
+        document.getElementById("kpiUsers").textContent = data.total_users || 0;
+        document.getElementById("kpiWinners").textContent = `${data.ctf1_finished || 0} / ${data.ctf2_finished || 0}`;
+        document.getElementById("kpiFails").textContent = `${data.total_fails || 0} ta xato`;
+        document.getElementById("kpiAttemptsSub").textContent = `${data.total_attempts || 0} ta tekshirish urinishi`;
+        document.getElementById("kpiHours").textContent = `${data.total_hours || 0} soat`;
+      } catch (e) {
+        console.error("Overview yuklashda xatolik:", e);
+      }
+    }
+
+    // Fetch Users Table
+    async function loadUsers() {
+      const tbody = document.getElementById("usersTableBody");
+      try {
+        const res = await fetch("/api/admin/users");
+        if (!res.ok) return;
+        const data = await res.json();
+        allUsersData = data.users || [];
+        renderUsersTable(allUsersData);
+      } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: #f87171; padding: 20px;">Ma'lumot yuklashda xatolik yuz berdi.</td></tr>`;
+      }
+    }
+
+    // Render Users Table
+    function renderUsersTable(users) {
+      const tbody = document.getElementById("usersTableBody");
+      if (!users || users.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: #64748b; padding: 24px;">Birorta ham talaba topilmadi.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = users.map((u, idx) => {
+        const ctf1Badge = u.ctf1_completed 
+          ? `<span class="badge badge-success">✅ Tugallangan (10/10)</span>` 
+          : `<span class="badge badge-cyan">Quiz ${u.ctf1_stage} / 10</span>`;
+
+        const ctf2Badge = u.ctf2_completed 
+          ? `<span class="badge badge-success">✅ Tugallangan (10/10)</span>` 
+          : (u.ctf1_completed ? `<span class="badge badge-warning">Quiz ${u.ctf2_stage} / 10</span>` : `<span class="badge badge-muted">🔒 Qulflangan</span>`);
+
+        const failBadge = u.total_fails > 10 
+          ? `<span class="badge badge-danger">${u.total_fails} ta xato</span>` 
+          : (u.total_fails > 3 ? `<span class="badge badge-warning">${u.total_fails} ta xato</span>` : `<span class="badge badge-success">${u.total_fails} ta xato</span>`);
+
+        const dateStr = u.registered_at ? u.registered_at.split('T')[0] : '—';
+        const lastActive = u.updated_at ? u.updated_at.split('.')[0].replace('T', ' ') : '—';
+
+        return `
+          <tr>
+            <td style="color: #64748b; font-family: monospace;">${idx + 1}</td>
+            <td>
+              <strong style="color: #fff; font-size: 14px;">${escapeHtml(u.username)}</strong>
+              <div style="font-size: 11px; color: #64748b;">Qo'shildi: ${dateStr}</div>
+            </td>
+            <td>${ctf1Badge}</td>
+            <td>${ctf2Badge}</td>
+            <td>
+              <span style="font-family: monospace; font-size: 14px; font-weight: 700; color: #00ff88;">⭐ ${u.total_score}</span>
+              <span style="font-size: 11px; color: #64748b;"> / 20</span>
+            </td>
+            <td>${failBadge}</td>
+            <td style="font-family: monospace; color: #38bdf8;">⏱️ ${u.total_time_str || '0s'}</td>
+            <td style="font-size: 12px; color: #94a3b8;">${lastActive}</td>
+            <td style="text-align: right; white-space: nowrap;">
+              <button onclick="openAuditModal('${escapeHtml(u.username)}')" class="btn-admin btn-audit">
+                📊 Tahlil / Audit
+              </button>
+              <button onclick="confirmResetStudent('${escapeHtml(u.username)}')" class="btn-admin btn-danger-sm" style="margin-left: 6px;">
+                🔄 Reset
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // Filter Users
+    function filterUsers() {
+      const q = document.getElementById("userSearchInput").value.toLowerCase().trim();
+      if (!q) {
+        renderUsersTable(allUsersData);
+        return;
+      }
+      const filtered = allUsersData.filter(u => u.username.toLowerCase().includes(q));
+      renderUsersTable(filtered);
+    }
+
+    // Open Student Audit Modal
+    async function openAuditModal(username) {
+      const modal = document.getElementById("auditModal");
+      document.getElementById("modalUsername").textContent = username;
+      document.getElementById("modalAvatar").textContent = username.charAt(0).toUpperCase();
+      document.getElementById("stageAuditBody").innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 24px; color: #64748b;">Yuklanmoqda...</td></tr>`;
+      modal.classList.add("active");
+
+      try {
+        const res = await fetch(`/api/admin/user/${encodeURIComponent(username)}/audit`);
+        if (!res.ok) throw new Error("Yuklab bo'lmadi");
+        currentAuditData = await res.json();
+
+        // Populate header KPIs
+        document.getElementById("modalScoreVal").textContent = `⭐ ${currentAuditData.total_score} / 20 ball`;
+        document.getElementById("modalFailsVal").textContent = `❌ ${currentAuditData.total_fails} ta xato`;
+        document.getElementById("modalTimeVal").textContent = `⏱️ ${currentAuditData.total_time_str}`;
+        document.getElementById("modalFlagText").textContent = currentAuditData.flag ? `🏁 Bayroq: ${currentAuditData.flag}` : `🏁 Bayroq: Hali olinmagan`;
+
+        const activeCtfNum = currentAuditData.progress ? currentAuditData.progress.active_ctf : 1;
+        document.getElementById("modalActiveBadge").textContent = `Hozir: CTF ${activeCtfNum}`;
+
+        activeAuditCtf = activeCtfNum || 1;
+        switchAuditTab(activeAuditCtf);
+      } catch (err) {
+        document.getElementById("stageAuditBody").innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 24px; color: #f87171;">Audit ma'lumotlarini yuklab bo'lmadi.</td></tr>`;
+      }
+    }
+
+    // Close Modal
+    function closeAuditModal() {
+      document.getElementById("auditModal").classList.remove("active");
+    }
+
+    // Switch Tab in Audit Modal (CTF 1 vs CTF 2)
+    function switchAuditTab(ctfId) {
+      activeAuditCtf = ctfId;
+      document.getElementById("pillCtf1").classList.toggle("active", ctfId === 1);
+      document.getElementById("pillCtf2").classList.toggle("active", ctfId === 2);
+
+      if (!currentAuditData || !currentAuditData.stages) return;
+
+      const filteredStages = currentAuditData.stages.filter(s => s.ctf_id === ctfId);
+      const tbody = document.getElementById("stageAuditBody");
+
+      tbody.innerHTML = filteredStages.map(s => {
+        const rowClass = s.current ? 'stage-row-current' : '';
+
+        // Error breakdown badge
+        let failBadgeHtml = `<span class="badge badge-muted">0 xato</span>`;
+        if (s.fails > 3) {
+          failBadgeHtml = `<span class="badge badge-danger">🔴 ${s.fails} ta xato (Qiyinlashgan)</span>`;
+        } else if (s.fails > 0) {
+          failBadgeHtml = `<span class="badge badge-warning">🟡 ${s.fails} ta xato</span>`;
+        } else if (s.completed) {
+          failBadgeHtml = `<span class="badge badge-success">🟢 0 xato (Silliq)</span>`;
+        }
+
+        // Score badge
+        let scoreHtml = `<span style="color: #64748b;">—</span>`;
+        if (s.completed) {
+          if (s.score === 1) {
+            scoreHtml = `<span class="badge badge-success">⭐ 1 ball</span>`;
+          } else {
+            scoreHtml = `<span class="badge badge-warning">⚠️ 0 ball (Yordam bilan)</span>`;
+          }
+        } else if (s.current) {
+          scoreHtml = `<span class="badge badge-cyan">⏳ Jarayonda</span>`;
+        }
+
+        return `
+          <tr class="${rowClass}">
+            <td>
+              <strong style="color: #fff; font-size: 13px;">Quiz ${s.stage}</strong>
+              <div style="font-size: 11px; margin-top: 2px;">${s.status_badge}</div>
+            </td>
+            <td class="desc-cell">
+              <div style="font-weight: 600; color: #e2e8f0; margin-bottom: 3px;">${escapeHtml(s.name.replace(`CTF ${s.ctf_id}: `, ''))}</div>
+              <div style="margin-bottom: 4px;"><span class="cmd-badge">${escapeHtml(s.commands || '')}</span></div>
+              <div style="font-size: 11px; color: #94a3b8;">${escapeHtml(s.description || '')}</div>
+            </td>
+            <td>${failBadgeHtml}</td>
+            <td style="font-family: monospace; font-size: 12px; color: #38bdf8;">
+              ${s.duration_str}
+            </td>
+            <td>${scoreHtml}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // Reset Student Confirmation
+    async function confirmResetStudent(username) {
+      if (!confirm(`Haqiqatan ham "${username}" talabasining barcha bosqichlarini va xatolar statistikasini qayta boshiga tiklamoqchimisiz?`)) {
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/admin/user/${encodeURIComponent(username)}/reset`, { method: "POST" });
+        const data = await res.json();
+        if (data.ok) {
+          alert(`✅ ${username} muvaffaqiyatli qayta tiklandi!`);
+          loadOverview();
+          loadUsers();
+          if (currentAuditData && currentAuditData.username === username) {
+            closeAuditModal();
+          }
+        } else {
+          alert(`Xatolik: ${data.error || "Qayta tiklab bo'lmadi"}`);
+        }
+      } catch (err) {
+        alert("Server bilan aloqa uzildi!");
+      }
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    // Auto-init on load
+    document.addEventListener("DOMContentLoaded", () => {
+      {% if is_admin %}
+        loadOverview();
+        loadUsers();
+        // Auto refresh every 20 seconds
+        setInterval(() => {
+          loadOverview();
+          loadUsers();
+        }, 20000);
+      {% endif %}
+    });
+
+    // Close modal on Escape key
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeAuditModal();
+    });
+  </script>
+</body>
+</html>
