@@ -529,7 +529,8 @@ def get_leaderboard():
                COALESCE(p.active_ctf, 1) as active_ctf,
                (CASE WHEN COALESCE(p.active_ctf, 1) = 2 THEN COALESCE(p.ctf2_stage, 1) ELSE COALESCE(p.ctf1_stage, 1) END) as current_stage,
                p.updated_at, f.flag,
-               (SELECT COUNT(*) FROM attempts a WHERE a.username = p.username AND a.result = 'pass') as pass_count,
+               ((CASE WHEN COALESCE(p.ctf1_stage, 1) > 10 THEN 10 ELSE COALESCE(p.ctf1_stage, 1) - 1 END) +
+                (CASE WHEN COALESCE(p.ctf2_stage, 1) > 10 THEN 10 ELSE COALESCE(p.ctf2_stage, 1) - 1 END)) as pass_count,
                (SELECT COUNT(*) FROM attempts a WHERE a.username = p.username AND a.result = 'fail') as fail_count
         FROM progress p
         LEFT JOIN flags f ON p.username = f.username

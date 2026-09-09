@@ -231,7 +231,16 @@ document.addEventListener("DOMContentLoaded", async () => {
           podiumDesc = `CTF 1: ${Math.min(ctf1, 10)}/10`;
         }
         document.getElementById(`podium-${n}-stage`).textContent = podiumDesc;
-        document.getElementById(`podium-${n}-flag`).textContent  = item.flag || "Flag yo'q";
+        const flagEl = document.getElementById(`podium-${n}-flag`);
+        if (item.flag) {
+          flagEl.innerHTML = item.flag.split("|").map(f => {
+            const clean = f.trim();
+            const colorCode = clean.startsWith("CTF2") ? "var(--color-accent-cyan)" : "var(--color-accent-green)";
+            return `<span style="display:block; font-size:0.7rem; color:${colorCode};">${clean}</span>`;
+          }).join("");
+        } else {
+          flagEl.textContent = "Flag yo'q";
+        }
       };
 
       if (board[0]) fill("1", board[0]);
@@ -279,7 +288,17 @@ document.addEventListener("DOMContentLoaded", async () => {
           }).join("<br>");
         }
 
-        const timeStr = item.updated_at ? item.updated_at.substring(11, 19) : "—";
+        let timeStr = "—";
+        if (item.updated_at) {
+          const parts = item.updated_at.split(" ");
+          if (parts.length >= 2) {
+            const d = parts[0].substring(5); // MM-DD
+            const t = parts[1].substring(0, 5); // HH:MM
+            timeStr = `${d} ${t}`;
+          } else {
+            timeStr = item.updated_at.substring(11, 16);
+          }
+        }
 
         return `
           <tr>
