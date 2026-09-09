@@ -242,12 +242,12 @@
         <div class="cheat-card">
           <h4>🔍 Qidiruv & Filtrlash (grep)</h4>
           <div class="cheat-cmd-list">
-            <div class="cheat-item"><span class="cheat-code">grep "pat" f</span><span>Fayldan mos qatorlarni qidirish</span></div>
-            <div class="cheat-item"><span class="cheat-code">grep -w "word" f</span><span>Aynan to'liq so'z chegarasi</span></div>
-            <div class="cheat-item"><span class="cheat-code">grep -i "key" f</span><span>Registrga (katta/kichik) qaramay</span></div>
-            <div class="cheat-item"><span class="cheat-code">grep -v "txt" f</span><span>Inkor qilish (mos kelmaganlar)</span></div>
-            <div class="cheat-item"><span class="cheat-code">grep -n "txt" f</span><span>Topilgan satr raqamini ko'rsatish</span></div>
-            <div class="cheat-item"><span class="cheat-code">grep -c "txt" f</span><span>Mos kelgan qatorlar sonini sanash</span></div>
+            <div class="cheat-item"><span class="cheat-code">grep "root" file</span><span>Satr ichidan qidirish</span></div>
+            <div class="cheat-item"><span class="cheat-code">grep -w "admin" file</span><span>Aynan to'liq mustaqil so'z</span></div>
+            <div class="cheat-item"><span class="cheat-code">grep -i "token" file</span><span>Registrga (katta/kichik) qaramay</span></div>
+            <div class="cheat-item"><span class="cheat-code">grep -v "DEBUG" file</span><span>Mos kelmagan satrlarni chiqarish</span></div>
+            <div class="cheat-item"><span class="cheat-code">grep -n "error" file</span><span>Qator raqami bilan ko'rsatish</span></div>
+            <div class="cheat-item"><span class="cheat-code">grep -c "fail" file</span><span>Topilgan qatorlar sonini sanash</span></div>
           </div>
         </div>
 
@@ -255,12 +255,12 @@
         <div class="cheat-card">
           <h4>🔎 Tizimdan Qidiruv (find)</h4>
           <div class="cheat-cmd-list">
-            <div class="cheat-item"><span class="cheat-code">find . -name "*.txt"</span><span>Nomi bo'yicha qidirish</span></div>
-            <div class="cheat-item"><span class="cheat-code">find . -type f</span><span>Faqat oddiy fayllarni topish</span></div>
-            <div class="cheat-item"><span class="cheat-code">find . -type d</span><span>Faqat kataloglarni (papka) topish</span></div>
-            <div class="cheat-item"><span class="cheat-code">find . -size 1024c</span><span>Aynan 1024 bayt hajmli fayl</span></div>
-            <div class="cheat-item"><span class="cheat-code">find . -size +0c</span><span>Bo'sh bo'lmagan fayllar</span></div>
-            <div class="cheat-item"><span class="cheat-code">find . -perm 777</span><span>Xavfli to'liq ochiq (777) fayllar</span></div>
+            <div class="cheat-item"><span class="cheat-code">find . -name "*.log"</span><span>Fayl kengaytmasi bo'yicha</span></div>
+            <div class="cheat-item"><span class="cheat-code">find . -type f</span><span>Faqat oddiy fayllarni filtrlash</span></div>
+            <div class="cheat-item"><span class="cheat-code">find . -type d</span><span>Faqat kataloglarni (papka) ajratish</span></div>
+            <div class="cheat-item"><span class="cheat-code">find . -size 512c</span><span>Aniq bayt (character) hajmi</span></div>
+            <div class="cheat-item"><span class="cheat-code">find . -size +1M</span><span>Hajmi 1MB dan katta fayllar</span></div>
+            <div class="cheat-item"><span class="cheat-code">find . -perm 600</span><span>Muayyan ruxsatga ega fayllar</span></div>
           </div>
         </div>
 
@@ -268,12 +268,12 @@
         <div class="cheat-card">
           <h4>📊 Ko'rish & Matn Tahlili</h4>
           <div class="cheat-cmd-list">
-            <div class="cheat-item"><span class="cheat-code">head -n 10 file</span><span>Dastlabki 10 ta qator</span></div>
-            <div class="cheat-item"><span class="cheat-code">tail -n 10 file</span><span>Oxirgi 10 ta qator</span></div>
-            <div class="cheat-item"><span class="cheat-code">wc -l &lt;file&gt;</span><span>Qatorlar sonini aniqlash</span></div>
-            <div class="cheat-item"><span class="cheat-code">wc -w &lt;file&gt;</span><span>So'zlar sonini hisoblash</span></div>
-            <div class="cheat-item"><span class="cheat-code">wc -c &lt;file&gt;</span><span>Baytlar hajmini hisoblash</span></div>
-            <div class="cheat-item"><span class="cheat-code">cmd1 | cmd2</span><span>Quvur (Piping): natijani uzatish</span></div>
+            <div class="cheat-item"><span class="cheat-code">head -n 20 file</span><span>Fayl boshidan N ta qator</span></div>
+            <div class="cheat-item"><span class="cheat-code">tail -n 15 file</span><span>Fayl oxiridan N ta qator</span></div>
+            <div class="cheat-item"><span class="cheat-code">wc -l file</span><span>Faylning umumiy qatorlar soni</span></div>
+            <div class="cheat-item"><span class="cheat-code">wc -w file</span><span>Fayldagi umumiy so'zlar soni</span></div>
+            <div class="cheat-item"><span class="cheat-code">wc -c file</span><span>Faylning umumiy bayt hajmi</span></div>
+            <div class="cheat-item"><span class="cheat-code">cmd1 | cmd2</span><span>Piping: 1-buyruq natijasi 2-chisiga</span></div>
           </div>
         </div>
 
@@ -281,12 +281,12 @@
         <div class="cheat-card">
           <h4>🔐 Ruxsatlar & Egalik (Security)</h4>
           <div class="cheat-cmd-list">
-            <div class="cheat-item"><span class="cheat-code">chmod +r &lt;file&gt;</span><span>Faylga o'qish (read) ruxsati</span></div>
-            <div class="cheat-item"><span class="cheat-code">chmod +x &lt;file&gt;</span><span>Ishga tushirish (exec) ruxsati</span></div>
-            <div class="cheat-item"><span class="cheat-code">chmod 755 &lt;dir&gt;</span><span>Katalogga to'liq ruxsat (rwxr-xr-x)</span></div>
-            <div class="cheat-item"><span class="cheat-code">chmod 644 &lt;file&gt;</span><span>Standart o'qish/yozish huquqi</span></div>
-            <div class="cheat-item"><span class="cheat-code">sudo chown u f</span><span>Fayl egasini o'zgartirish</span></div>
-            <div class="cheat-item"><span class="cheat-code">./script.sh</span><span>Joriy skriptni ishga tushirish</span></div>
+            <div class="cheat-item"><span class="cheat-code">chmod +r file</span><span>Faylga o'qish (read) ruxsati</span></div>
+            <div class="cheat-item"><span class="cheat-code">chmod +x script</span><span>Ishga tushirish (exec) ruxsati</span></div>
+            <div class="cheat-item"><span class="cheat-code">chmod 755 dir</span><span>Katalogga to'liq ruxsat (rwxr-xr-x)</span></div>
+            <div class="cheat-item"><span class="cheat-code">chmod 644 file</span><span>Standart o'qish/yozish (rw-r--r--)</span></div>
+            <div class="cheat-item"><span class="cheat-code">sudo chown user file</span><span>Fayl egasini o'zgartirish</span></div>
+            <div class="cheat-item"><span class="cheat-code">./app.sh</span><span>Joriy skriptni ishga tushirish</span></div>
           </div>
         </div>
 
