@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Apex Linux CTF — Kirish</title>
+  <meta name="description" content="Apex Linux CTF platformasiga kirish yoki ro'yxatdan o'tish.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:        #080d17;
+      --bg-card:   #0d1526;
+      --border:    rgba(40, 65, 110, 0.6);
+      --glow:      rgba(0, 220, 255, 0.3);
+      --green:     #00ff88;
+      --cyan:      #00dcff;
+      --purple:    #a855f7;
+      --red:       #f87171;
+      --text:      #eef2ff;
+      --muted:     #6b7fa3;
+      --mono:      'JetBrains Mono', monospace;
+      --sans:      'Inter', sans-serif;
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      background-image:
+        radial-gradient(ellipse at 20% 20%, rgba(0,220,255,0.07) 0, transparent 50%),
+        radial-gradient(ellipse at 80% 80%, rgba(168,85,247,0.07) 0, transparent 50%);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Animated grid background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0,220,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,220,255,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 440px;
+    }
+
+    /* Logo / Header */
+    .logo-area {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .logo-icon {
+      width: 64px;
+      height: 64px;
+      background: linear-gradient(135deg, var(--cyan), var(--purple));
+      border-radius: 16px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--mono);
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #040810;
+      box-shadow: 0 0 30px rgba(0, 220, 255, 0.4), 0 0 60px rgba(0, 220, 255, 0.15);
+      margin-bottom: 1rem;
+      animation: pulse-icon 3s ease-in-out infinite;
+    }
+
+    @keyframes pulse-icon {
+      0%, 100% { box-shadow: 0 0 30px rgba(0,220,255,0.4), 0 0 60px rgba(0,220,255,0.15); }
+      50%       { box-shadow: 0 0 40px rgba(0,220,255,0.6), 0 0 80px rgba(0,220,255,0.25); }
+    }
+
+    .logo-title {
+      font-size: 1.6rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      background: linear-gradient(90deg, #fff, var(--cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .logo-sub {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-top: 0.3rem;
+      font-family: var(--mono);
+    }
+
+    /* Card */
+    .card {
+      background: rgba(13, 21, 38, 0.9);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2rem;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(0,220,255,0.05);
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      background: rgba(8, 13, 23, 0.8);
+      border-radius: 10px;
+      padding: 4px;
+      margin-bottom: 1.75rem;
+      border: 1px solid var(--border);
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 0.6rem;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      font-size: 0.88rem;
+      font-weight: 600;
+      font-family: var(--sans);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .tab-btn.active {
+      background: linear-gradient(135deg, rgba(0,220,255,0.2), rgba(168,85,247,0.2));
+      color: var(--cyan);
+      box-shadow: 0 0 15px rgba(0,220,255,0.1);
+    }
+
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+
+    /* Form */
+    .form-group {
+      margin-bottom: 1.1rem;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 0.45rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .input-wrap {
+      position: relative;
+    }
+
+    .input-icon {
+      position: absolute;
+      left: 0.9rem;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 1rem;
+      pointer-events: none;
+    }
+
+    .form-input {
+      width: 100%;
+      background: rgba(8, 13, 23, 0.8);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 0.75rem 0.9rem 0.75rem 2.5rem;
+      border-radius: 10px;
+      font-family: var(--mono);
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .form-input:focus {
+      border-color: var(--cyan);
+      box-shadow: 0 0 0 3px rgba(0, 220, 255, 0.1);
+    }
+
+    .form-input::placeholder { color: var(--muted); }
+
+    /* Error / success alert */
+    .alert {
+      padding: 0.7rem 1rem;
+      border-radius: 8px;
+      font-size: 0.83rem;
+      margin-bottom: 1rem;
+      display: none;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .alert.show { display: flex; }
+
+    .alert-error {
+      background: rgba(248, 113, 113, 0.12);
+      border: 1px solid rgba(248, 113, 113, 0.35);
+      color: var(--red);
+    }
+
+    .alert-success {
+      background: rgba(0, 255, 136, 0.1);
+      border: 1px solid rgba(0, 255, 136, 0.3);
+      color: var(--green);
+    }
+
+    /* Submit button */
+    .btn-submit {
+      width: 100%;
+      padding: 0.85rem;
+      border: none;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      font-family: var(--sans);
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 0.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-submit::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, transparent, rgba(255,255,255,0.08), transparent);
+      transform: translateX(-100%);
+      transition: transform 0.4s;
+    }
+
+    .btn-submit:hover::before { transform: translateX(100%); }
+
+    .btn-login {
+      background: linear-gradient(135deg, #0891b2, #0e7490);
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(8, 145, 178, 0.3);
+    }
+
+    .btn-login:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 25px rgba(8, 145, 178, 0.4);
+    }
+
+    .btn-register {
+      background: linear-gradient(135deg, #7c3aed, #6d28d9);
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(124, 58, 237, 0.3);
+    }
+
+    .btn-register:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 25px rgba(124, 58, 237, 0.4);
+    }
+
+    .btn-submit:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+
+    /* Loading spinner */
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Footer hint */
+    .footer-hint {
+      text-align: center;
+      margin-top: 1.5rem;
+      font-size: 0.78rem;
+      color: var(--muted);
+      font-family: var(--mono);
+    }
+
+    .footer-hint span { color: var(--cyan); }
+
+    /* Divider */
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin: 1.25rem 0;
+      color: var(--muted);
+      font-size: 0.75rem;
+    }
+
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* Hint text */
+    .hint-text {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 0.35rem;
+      padding-left: 0.2rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Logo -->
+    <div class="logo-area">
+      <div class="logo-icon">&gt;_</div>
+      <div class="logo-title">APEX LINUX CTF</div>
+      <div class="logo-sub">Interactive Terminal Platform</div>
+    </div>
+
+    <!-- Card -->
+    <div class="card">
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab-btn active" id="tab-login-btn" onclick="switchTab('login')">
+          🔑 Kirish
+        </button>
+        <button class="tab-btn" id="tab-register-btn" onclick="switchTab('register')">
+          ✨ Ro'yxatdan o'tish
+        </button>
+      </div>
+
+      <!-- LOGIN PANE -->
+      <div class="tab-pane active" id="pane-login">
+        <div class="alert alert-error" id="login-error"></div>
+
+        <div class="form-group">
+          <label class="form-label">Username</label>
+          <div class="input-wrap">
+            <span class="input-icon">👤</span>
+            <input type="text" class="form-input" id="login-username"
+              placeholder="username" autocomplete="username"
+              autocapitalize="none" spellcheck="false">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Parol</label>
+          <div class="input-wrap">
+            <span class="input-icon">🔒</span>
+            <input type="password" class="form-input" id="login-password"
+              placeholder="••••••••" autocomplete="current-password">
+          </div>
+        </div>
+
+        <button class="btn-submit btn-login" id="btn-login" onclick="doLogin()">
+          🚀 Kirish
+        </button>
+      </div>
+
+      <!-- REGISTER PANE -->
+      <div class="tab-pane" id="pane-register">
+        <div class="alert alert-error" id="register-error"></div>
+        <div class="alert alert-success" id="register-success"></div>
+
+        <div class="form-group">
+          <label class="form-label">Username</label>
+          <div class="input-wrap">
+            <span class="input-icon">👤</span>
+            <input type="text" class="form-input" id="reg-username"
+              placeholder="talaba_ism" autocomplete="username"
+              autocapitalize="none" spellcheck="false">
+          </div>
+          <div class="hint-text">Faqat harf, raqam va _ belgisi. Kamida 3 ta belgi.</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Parol</label>
+          <div class="input-wrap">
+            <span class="input-icon">🔒</span>
+            <input type="password" class="form-input" id="reg-password"
+              placeholder="••••••••" autocomplete="new-password">
+          </div>
+          <div class="hint-text">Kamida 4 ta belgi.</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Parolni Tasdiqlang</label>
+          <div class="input-wrap">
+            <span class="input-icon">✅</span>
+            <input type="password" class="form-input" id="reg-password2"
+              placeholder="••••••••" autocomplete="new-password">
+          </div>
+        </div>
+
+        <button class="btn-submit btn-register" id="btn-register" onclick="doRegister()">
+          ✨ Ro'yxatdan O'tish
+        </button>
+      </div>
+    </div>
+
+    <div class="footer-hint">
+      <span>Apex Linux CTF</span> · 2026 · 10 ta bosqich
+    </div>
+  </div>
+
+  <script>
+    // ── Tab switching ─────────────────────────────────────────
+    function switchTab(tab) {
+      document.getElementById('pane-login').classList.toggle('active', tab === 'login');
+      document.getElementById('pane-register').classList.toggle('active', tab === 'register');
+      document.getElementById('tab-login-btn').classList.toggle('active', tab === 'login');
+      document.getElementById('tab-register-btn').classList.toggle('active', tab === 'register');
+      clearAlerts();
+    }
+
+    function clearAlerts() {
+      ['login-error','register-error','register-success'].forEach(id => {
+        const el = document.getElementById(id);
+        el.classList.remove('show');
+        el.textContent = '';
+      });
+    }
+
+    function showAlert(id, msg) {
+      const el = document.getElementById(id);
+      el.textContent = msg;
+      el.classList.add('show');
+    }
+
+    function setLoading(btnId, loading) {
+      const btn = document.getElementById(btnId);
+      if (loading) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span> Yuklanmoqda...';
+      } else {
+        btn.disabled = false;
+        btn.innerHTML = btnId === 'btn-login' ? '🚀 Kirish' : '✨ Ro\'yxatdan O\'tish';
+      }
+    }
+
+    // ── Enter key handling ────────────────────────────────────
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter') return;
+      const loginPane = document.getElementById('pane-login');
+      if (loginPane.classList.contains('active')) {
+        doLogin();
+      } else {
+        doRegister();
+      }
+    });
+
+    // ── Login ─────────────────────────────────────────────────
+    async function doLogin() {
+      clearAlerts();
+      const username = document.getElementById('login-username').value.trim();
+      const password = document.getElementById('login-password').value;
+
+      if (!username || !password) {
+        showAlert('login-error', '⚠️ Username va parol kiritilishi shart.');
+        return;
+      }
+
+      setLoading('btn-login', true);
+
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+
+        if (data.ok) {
+          window.location.href = '/';
+        } else {
+          showAlert('login-error', '❌ ' + data.error);
+        }
+      } catch (err) {
+        showAlert('login-error', '❌ Server bilan bog\'lanishda xatolik.');
+      } finally {
+        setLoading('btn-login', false);
+      }
+    }
+
+    // ── Register ──────────────────────────────────────────────
+    async function doRegister() {
+      clearAlerts();
+      const username = document.getElementById('reg-username').value.trim();
+      const password = document.getElementById('reg-password').value;
+      const password2 = document.getElementById('reg-password2').value;
+
+      if (!username || !password || !password2) {
+        showAlert('register-error', '⚠️ Barcha maydonlarni to\'ldiring.');
+        return;
+      }
+
+      if (password !== password2) {
+        showAlert('register-error', '❌ Parollar mos kelmadi.');
+        return;
+      }
+
+      setLoading('btn-register', true);
+
+      try {
+        const res = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+
+        if (data.ok) {
+          // Auto-redirect after successful registration
+          window.location.href = '/';
+        } else {
+          showAlert('register-error', '❌ ' + data.error);
+        }
+      } catch (err) {
+        showAlert('register-error', '❌ Server bilan bog\'lanishda xatolik.');
+      } finally {
+        setLoading('btn-register', false);
+      }
+    }
+  </script>
+</body>
+</html>

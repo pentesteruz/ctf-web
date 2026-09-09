@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Apex Linux CTF — Web Interactive Terminal</title>
+  <meta name="description" content="Linux buyruqlari va CTF topshiriqlarini real-vaqtda o'rganish uchun web interaktiv terminal platformasi.">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+  <!-- Top Navbar -->
+  <header class="navbar">
+    <div class="brand">
+      <div class="brand-icon">&gt;_</div>
+      <div>
+        <div class="brand-title">APEX LINUX CTF</div>
+        <div class="brand-subtitle">Interactive Terminal Environment</div>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <nav class="nav-tabs">
+      <button class="nav-tab active" data-tab="terminal-tab" id="btn-tab-terminal">
+        💻 Terminal
+      </button>
+      <button class="nav-tab" data-tab="leaderboard-tab" id="btn-tab-leaderboard">
+        🏆 Leaderboard
+      </button>
+      <button class="nav-tab" data-tab="cheatsheet-tab" id="btn-tab-cheatsheet">
+        📖 Cheatsheet
+      </button>
+    </nav>
+
+    <!-- Student Info & Controls -->
+    <div class="user-control">
+      <div class="user-badge">
+        <span class="status-dot"></span>
+        <span id="lbl-user-display">{{ username }}</span>
+      </div>
+
+      <button id="btn-reset" class="btn-tool btn-danger" title="Progressni 1-bosqichdan qayta boshlash">
+        🔄 Reset
+      </button>
+
+      <button id="btn-logout" class="btn-tool" title="Chiqish">
+        🚪 Chiqish
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Application Body -->
+  <main class="app-container">
+
+    <!-- TAB 1: Full-width Terminal -->
+    <section id="terminal-tab" class="tab-content active">
+      <div class="terminal-wrapper">
+        <div class="terminal-header">
+          <div class="window-dots">
+            <span class="dot dot-red"></span>
+            <span class="dot dot-yellow"></span>
+            <span class="dot dot-green"></span>
+          </div>
+          <div class="terminal-title">
+            <span id="term-username-display">{{ username }}</span>
+            <span style="color: var(--text-muted);">@ctf-linux:</span>
+            <span id="term-cwd-display">~</span>
+            <span style="color: var(--text-muted);">— bash</span>
+          </div>
+          <div class="quick-toolbar">
+            <div class="stage-pill" id="stage-pill">Stage {{ stage }}/10</div>
+            <button class="btn-tool btn-check" id="btn-quick-check" title="Bosqichni tekshirish">
+              ✅ check
+            </button>
+            <button class="btn-tool" id="btn-quick-status" title="Holatni ko'rish">
+              📊 status
+            </button>
+            <button class="btn-tool" id="btn-quick-help" title="Yordam buyruqlari">
+              💡 help
+            </button>
+            <button class="btn-tool" id="btn-quick-clear" title="Terminalni tozalash">
+              🧹 clear
+            </button>
+          </div>
+        </div>
+
+        <!-- Terminal Output Area -->
+        <div class="terminal-body" id="terminal-body">
+          <div class="term-line term-welcome">
+            ██╗     ██╗███╗   ██╗██╗   ██╗██╗  ██╗     ██████╗████████╗███████╗
+          </div>
+          <div class="term-line term-welcome">
+            ██║     ██║████╗  ██║██║   ██║╚██╗██╔╝    ██╔════╝╚══██╔══╝██╔════╝
+          </div>
+          <div class="term-line term-welcome">
+            ██║     ██║██╔██╗ ██║██║   ██║ ╚███╔╝     ██║        ██║   █████╗
+          </div>
+          <div class="term-line term-welcome">
+            ██║     ██║██║╚██╗██║██║   ██║ ██╔██╗     ██║        ██║   ██╔══╝
+          </div>
+          <div class="term-line term-welcome">
+            ███████╗██║██║ ╚████║╚██████╔╝██╔╝ ██╗    ╚██████╗   ██║   ██║
+          </div>
+          <div class="term-line term-welcome">
+            ╚══════╝╚═╝╚═╝  ╚═══╝ ╚═════╝ ╚═╝  ╚═╝     ╚═════╝   ╚═╝   ╚═╝
+          </div>
+          <div class="term-line" style="color: var(--color-accent-cyan); margin-top: 0.5rem;">
+            ─────────────── Apex Linux CTF Web Terminal v2.0 ───────────────
+          </div>
+          <div class="term-line" style="color: var(--text-secondary); margin-bottom: 1rem;">
+            💡 Boshlash: <span style="color: var(--color-accent-green);">cat ~/ROADMAP.txt</span> | Yordam: <span style="color: var(--color-accent-green);">help</span> | Holat: <span style="color: var(--color-accent-green);">status</span>
+          </div>
+
+          <div id="terminal-output-buffer"></div>
+
+          <!-- Active Prompt Input Row -->
+          <div class="term-input-row" id="term-input-row">
+            <span class="term-prompt" id="term-prompt-label">
+              <span class="prompt-user" id="prompt-username">{{ username }}</span><span class="prompt-at">@ctf-linux:</span><span class="term-path" id="term-prompt-path">~</span><span class="prompt-dollar">$&nbsp;</span>
+            </span>
+            <input type="text" id="term-input" class="term-input"
+              autocomplete="off" spellcheck="false" autofocus
+              aria-label="Terminal buyruq kiritish">
+          </div>
+
+          <!-- Tab completion hint popup -->
+          <div class="tab-hints" id="tab-hints" style="display:none;"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: Leaderboard -->
+    <section id="leaderboard-tab" class="tab-content">
+      <!-- Top 3 Winners Podium -->
+      <div class="podium-container">
+        <div class="podium-card podium-silver">
+          <div class="podium-rank">🥈</div>
+          <div class="podium-user" id="podium-2-name">--</div>
+          <div class="podium-stage" id="podium-2-stage">Stage 0</div>
+          <div class="podium-flag" id="podium-2-flag">Kutilmoqda...</div>
+        </div>
+        <div class="podium-card podium-gold">
+          <div class="podium-crown">👑</div>
+          <div class="podium-rank">🥇</div>
+          <div class="podium-user" id="podium-1-name">--</div>
+          <div class="podium-stage" id="podium-1-stage">Stage 0</div>
+          <div class="podium-flag" id="podium-1-flag">Kutilmoqda...</div>
+        </div>
+        <div class="podium-card podium-bronze">
+          <div class="podium-rank">🥉</div>
+          <div class="podium-user" id="podium-3-name">--</div>
+          <div class="podium-stage" id="podium-3-stage">Stage 0</div>
+          <div class="podium-flag" id="podium-3-flag">Kutilmoqda...</div>
+        </div>
+      </div>
+
+      <!-- Full Leaderboard Table -->
+      <div class="leaderboard-table-card">
+        <div class="lb-header">
+          <h3>📊 Jonli Turnir Jadvali</h3>
+          <button class="btn-tool" id="btn-refresh-leaderboard">🔄 Yangilash</button>
+        </div>
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>O'rin</th>
+                <th>Talaba</th>
+                <th>Bosqich</th>
+                <th>Progress</th>
+                <th>To'g'ri / Xato</th>
+                <th>Flag</th>
+                <th>Oxirgi Faollik</th>
+              </tr>
+            </thead>
+            <tbody id="leaderboard-tbody">
+              <tr>
+                <td colspan="7" style="text-align: center; color: var(--text-muted);">Yuklanmoqda...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: Linux Cheatsheet -->
+    <section id="cheatsheet-tab" class="tab-content">
+      <div class="cheatsheet-grid">
+
+        <div class="cheat-card">
+          <h4>📁 Navigatsiya va Kataloglar</h4>
+          <div class="cheat-cmd-list">
+            <div class="cheat-item"><span class="cheat-code">pwd</span><span>Joriy papka manzili</span></div>
+            <div class="cheat-item"><span class="cheat-code">ls</span><span>Fayllar ro'yxati</span></div>
+            <div class="cheat-item"><span class="cheat-code">ls -la</span><span>Yashirin fayllar bilan</span></div>
+            <div class="cheat-item"><span class="cheat-code">cd &lt;dir&gt;</span><span>Papkaga o'tish</span></div>
+            <div class="cheat-item"><span class="cheat-code">cd ~</span><span>Uy papkasiga qaytish</span></div>
+            <div class="cheat-item"><span class="cheat-code">mkdir &lt;name&gt;</span><span>Yangi papka yaratish</span></div>
+          </div>
+        </div>
+
+        <div class="cheat-card">
+          <h4>📄 Fayllar bilan Ishlash</h4>
+          <div class="cheat-cmd-list">
+            <div class="cheat-item"><span class="cheat-code">touch &lt;file&gt;</span><span>Bo'sh fayl yaratish</span></div>
+            <div class="cheat-item"><span class="cheat-code">cat &lt;file&gt;</span><span>Fayl ichini o'qish</span></div>
+            <div class="cheat-item"><span class="cheat-code">nano &lt;file&gt;</span><span>Faylni tahrirlash (editor)</span></div>
+            <div class="cheat-item"><span class="cheat-code">echo "text" &gt; file</span><span>Faylga matn yozish</span></div>
+            <div class="cheat-item"><span class="cheat-code">rm &lt;file&gt;</span><span>Faylni o'chirish</span></div>
+            <div class="cheat-item"><span class="cheat-code">rm -r &lt;dir&gt;</span><span>Papkani o'chirish</span></div>
+          </div>
+        </div>
+
+        <div class="cheat-card">
+          <h4>🔍 Qidirish va O'qish</h4>
+          <div class="cheat-cmd-list">
+            <div class="cheat-item"><span class="cheat-code">head -n 10 file</span><span>Dastlabki 10 qator</span></div>
+            <div class="cheat-item"><span class="cheat-code">tail -n 10 file</span><span>Oxirgi 10 qator</span></div>
+            <div class="cheat-item"><span class="cheat-code">grep "pattern" file</span><span>Matn qidirish</span></div>
+            <div class="cheat-item"><span class="cheat-code">find . -name "*.txt"</span><span>Fayl qidirish</span></div>
+            <div class="cheat-item"><span class="cheat-code">head -n 155 file | tail -5</span><span>150-155 qatorlar</span></div>
+          </div>
+        </div>
+
+        <div class="cheat-card">
+          <h4>🔐 Ruxsatlar va CTF</h4>
+          <div class="cheat-cmd-list">
+            <div class="cheat-item"><span class="cheat-code">chmod +x script.sh</span><span>Ishga tushirish huquqi</span></div>
+            <div class="cheat-item"><span class="cheat-code">./script.sh</span><span>Skriptni ishga tushirish</span></div>
+            <div class="cheat-item"><span class="cheat-code">sudo chown user file</span><span>Fayl egasini o'zgartirish</span></div>
+            <div class="cheat-item"><span class="cheat-code">ls -l</span><span>Ruxsatlar va egasi</span></div>
+            <div class="cheat-item"><span class="cheat-code">check</span><span>Bosqich tekshiruvi</span></div>
+            <div class="cheat-item"><span class="cheat-code">status</span><span>Joriy vazifa holati</span></div>
+          </div>
+        </div>
+
+        <div class="cheat-card">
+          <h4>💡 CTF Yechish Yo'riqnomasi</h4>
+          <div class="cheat-cmd-list">
+            <div class="cheat-item"><span class="cheat-code">quiz4</span><span>grep "KEY-" bigfile.log</span></div>
+            <div class="cheat-item"><span class="cheat-code">quiz5</span><span>grep "PASS-" bigfile2.txt</span></div>
+            <div class="cheat-item"><span class="cheat-code">quiz9</span><span>cd level1/level2 → ls -la</span></div>
+            <div class="cheat-item"><span class="cheat-code">Tab</span><span>Buyruq / fayl nomini to'ldirish</span></div>
+            <div class="cheat-item"><span class="cheat-code">↑ ↓</span><span>Buyruqlar tarixi</span></div>
+          </div>
+        </div>
+
+        <div class="cheat-card">
+          <h4>🗺️ 10 Bosqich Xaritasi</h4>
+          <div class="cheat-cmd-list">
+            <div class="cheat-item"><span class="cheat-code">quiz1</span><span>mkdir — papkalar yaratish</span></div>
+            <div class="cheat-item"><span class="cheat-code">quiz2</span><span>touch — fayllar yaratish</span></div>
+            <div class="cheat-item"><span class="cheat-code">quiz3</span><span>echo/nano — matn yozish</span></div>
+            <div class="cheat-item"><span class="cheat-code">quiz4</span><span>grep/head/tail — log qidirish</span></div>
+            <div class="cheat-item"><span class="cheat-code">quiz5</span><span>grep — katta fayldan kalit</span></div>
+            <div class="cheat-item"><span class="cheat-code">quiz6</span><span>rm / rm -r — fayllarni o'chirish</span></div>
+            <div class="cheat-item"><span class="cheat-code">quiz7</span><span>chmod +x — ruxsat berish va ./script.sh</span></div>
+            <div class="cheat-item"><span class="cheat-code">quiz8</span><span>sudo chown — fayl egasini o'zgartirish</span></div>
+            <div class="cheat-item"><span class="cheat-code">quiz9</span><span>ls -la / cd — yashirin fayl topish</span></div>
+            <div class="cheat-item"><span class="cheat-code">quiz10</span><span>chmod +x final.sh → ./final.sh → check 🏆</span></div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Interactive Nano Modal Editor -->
+  <div class="editor-modal" id="nanoModal">
+    <div class="editor-window">
+      <div class="editor-header">
+        <span>GNU nano — <strong id="editor-filename">file.txt</strong></span>
+        <span style="font-size: 0.8rem; color: var(--text-muted);">
+          <span id="editor-filepath">/home/talaba1/file.txt</span>
+        </span>
+      </div>
+      <textarea id="editor-content" class="editor-textarea" placeholder="Matningizni shu yerga yozing..."></textarea>
+      <div class="editor-footer">
+        <span class="editor-hint">^O Saqlash &nbsp;&nbsp; ^X Chiqish</span>
+        <div style="display: flex; gap: 0.5rem;">
+          <button class="btn-tool btn-danger" id="btn-editor-cancel">
+            ✕ Bekor (Esc)
+          </button>
+          <button class="btn-tool btn-check" id="btn-editor-save">
+            💾 Saqlash (Ctrl+S)
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/terminal.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
