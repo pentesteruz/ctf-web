@@ -1126,8 +1126,8 @@ def _populate_ctf2_fs(fs, username, stage, answers):
                 "type": "file", "owner": username, "mode": "644", "content": "0" * (i * 50)
             }
         exact_512 = f"FINAL_FLAG: {k20}\n" + ("Z" * (512 - len(f"FINAL_FLAG: {k20}\n")))
-        lockbox_children.append("secure_vault.dat")
-        fs[f"/home/{username}/quiz10/lockbox/secure_vault.dat"] = {
+        lockbox_children.append("box_10.bin")
+        fs[f"/home/{username}/quiz10/lockbox/box_10.bin"] = {
             "type": "file", "owner": username, "mode": "644", "content": exact_512
         }
 
@@ -1870,7 +1870,24 @@ def execute_command():
                 imode = item_meta.get("mode", "644")
                 if long_format:
                     prefix = "d" if itype == "dir" else "-"
-                    perm = "rwxr-xr-x" if itype == "dir" or "x" in imode else "rw-r--r--"
+                    # Convert mode to real rwx representation
+                    if imode == "000":
+                        perm = "---------"
+                    elif imode in ("200", "-r"):
+                        perm = "-w-------"
+                    elif imode == "400":
+                        perm = "r--------"
+                    elif imode in ("600", "rw"):
+                        perm = "rw-------"
+                    elif imode in ("644", "r", "+r", "u+r"):
+                        perm = "rw-r--r--"
+                    elif imode in ("755", "x", "+x", "u+x", "+rx", "u+xr", "u+rx"):
+                        perm = "rwxr-xr-x"
+                    elif imode == "777":
+                        perm = "rwxrwxrwx"
+                    else:
+                        perm = "rwxr-xr-x" if itype == "dir" or "x" in imode else "rw-r--r--"
+
                     fcontent = item_meta.get("content", "")
                     sz = 4096 if itype == "dir" else len(fcontent.encode("utf-8"))
                     result_items.append(f"{prefix}{perm} 1 {iowner} {iowner} {sz:5d} Sep  9 {item}")
@@ -2205,7 +2222,7 @@ def execute_command():
             target_file = args[1]
             target_path = resolve_path(target_file)
             if target_path in fs:
-                if "+x" in mode_arg or "+rx" in mode_arg or "755" in mode_arg or "777" in mode_arg or mode_arg in ("x", "+x", "u+x"):
+                if "+x" in mode_arg or "+rx" in mode_arg or "+xr" in mode_arg or "u+xr" in mode_arg or "u+rx" in mode_arg or "755" in mode_arg or "777" in mode_arg or mode_arg in ("x", "+x", "u+x"):
                     fs[target_path]["mode"] = "755"
                     output = ""
                 elif "+r" in mode_arg or "644" in mode_arg or mode_arg in ("r", "+r", "u+r", "444"):
