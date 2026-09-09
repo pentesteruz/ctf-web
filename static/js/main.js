@@ -315,8 +315,7 @@ document.addEventListener("DOMContentLoaded", async () => {
               </div>
             </td>
             <td>
-              <span style="color:var(--color-accent-green);">${item.pass_count || 0}✓</span>
-              <span style="color:#f87171; margin-left:6px;">${item.fail_count || 0}✗</span>
+              <span style="color:var(--color-accent-green); font-weight:700;">${item.pass_count || 0} / 20</span>
             </td>
             <td>${flagStr}</td>
             <td style="color:var(--text-muted);font-size:0.8rem;">${timeStr}</td>
