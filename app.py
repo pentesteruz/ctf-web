@@ -1086,13 +1086,11 @@ def _populate_ctf2_fs(fs, username, stage, answers):
         for i in range(1, 21):
             fname = f"empty_{i:02d}.log"
             cleanup_children.append(fname)
+            # 13-fayl bo'sh emas, aynan uning ichida haqiqiy kalit bor!
+            cnt = k19 if i == 13 else ""
             fs[f"/home/{username}/quiz9/cleanup/{fname}"] = {
-                "type": "file", "owner": username, "mode": "644", "content": ""
+                "type": "file", "owner": username, "mode": "644", "content": cnt
             }
-        cleanup_children.append("real_signal.txt")
-        fs[f"/home/{username}/quiz9/cleanup/real_signal.txt"] = {
-            "type": "file", "owner": username, "mode": "644", "content": k19
-        }
 
         fs[f"/home/{username}/quiz9"] = {
             "type": "dir", "owner": username, "mode": "755",
@@ -1455,16 +1453,26 @@ def check_quiz():
 
     else:
         # ── CTF 2 Checks (1-10) ──────────────────────────────────
+        def get_answer_content(st):
+            # Check ~/quiz{st}/answer.txt as well as any subdirectories like ~/quiz{st}/*/answer.txt
+            base_f = f"/home/{username}/quiz{st}/answer.txt"
+            if base_f in fs and fs[base_f]["type"] == "file":
+                return fs[base_f]["content"].strip().replace(" ", "").replace("\n", "")
+            # search subdirectories of quiz{st}
+            for path_k, item in fs.items():
+                if path_k.startswith(f"/home/{username}/quiz{st}/") and path_k.endswith("/answer.txt"):
+                    if item["type"] == "file":
+                        return item["content"].strip().replace(" ", "").replace("\n", "")
+            return None
+
         # quiz1: secret_zone papkasiga execute ruxsati berilgan va .secret_flag kaliti ko'chirilgan
         if stage == 1:
-            f = f"/home/{username}/quiz1/answer.txt"
             expected = db.get_student_answers(username).get(11, "")
             mode_dir = fs.get(f"/home/{username}/quiz1/secret_zone", {}).get("mode", "000")
             has_exec = ("x" in mode_dir or mode_dir in ("755", "777", "775", "111", "555"))
-            if f in fs and fs[f]["type"] == "file" and has_exec:
-                given = fs[f]["content"].strip().replace(" ", "").replace("\n", "")
-                if expected in given:
-                    passed = True
+            given = get_answer_content(1)
+            if given and has_exec and expected in given:
+                passed = True
 
         # quiz2: confidential.txt ga read ruxsati berilgan va kalit ko'chirilgan
         elif stage == 2:
@@ -1532,23 +1540,19 @@ def check_quiz():
 
         # quiz9: cleanup/ dan bo'sh bo'lmagan fayl kaliti topilgan
         elif stage == 9:
-            f = f"/home/{username}/quiz9/answer.txt"
             expected = db.get_student_answers(username).get(19, "")
-            if f in fs and fs[f]["type"] == "file":
-                given = fs[f]["content"].strip().replace(" ", "").replace("\n", "")
-                if expected in given:
-                    passed = True
+            given = get_answer_content(9)
+            if given and expected in given:
+                passed = True
 
         # quiz10: lockbox ruxsati ochilgan va final kalit topilgan
         elif stage == 10:
-            f = f"/home/{username}/quiz10/answer.txt"
             expected = db.get_student_answers(username).get(20, "")
             mode_box = fs.get(f"/home/{username}/quiz10/lockbox", {}).get("mode", "000")
             has_exec = ("x" in mode_box or mode_box in ("755", "777", "775", "111", "555"))
-            if f in fs and fs[f]["type"] == "file" and has_exec:
-                given = fs[f]["content"].strip().replace(" ", "").replace("\n", "")
-                if expected in given:
-                    passed = True
+            given = get_answer_content(10)
+            if given and has_exec and expected in given:
+                passed = True
 
     if passed:
         db.log_attempt(username, stage, "pass", ctf=active_ctf)
