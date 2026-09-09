@@ -1600,7 +1600,7 @@ def autocomplete_terminal():
         return posixpath.normpath(p)
 
     cmds = ["ls", "cd", "mkdir", "touch", "nano", "cat", "head", "tail", "rm",
-            "chmod", "chown", "check", "status", "clear", "help", "whoami", "pwd", "sudo", "find", "grep", "echo", "ctf1", "ctf2"]
+            "chmod", "chown", "check", "status", "reset", "clear", "help", "whoami", "pwd", "sudo", "find", "grep", "echo", "ctf1", "ctf2"]
 
     tokens = text.split()
     is_trailing_space = text.endswith(" ")
@@ -1679,6 +1679,10 @@ def execute_command():
             label = "CTF 1 (Linux Asoslari)" if target_ctf == 1 else "CTF 2 (Ilg'or Kiberxavfsizlik)"
             output = f"🔄 {label} moduliga muvaffaqiyatli o'tildi!\n💡 Boshlash: cd ~/quiz1 && cat README.txt"
 
+    elif cmd == "reset":
+        sync_fs(username)
+        output = "🔄 Joriy bosqich fayllari va tizim yangilandi (tozalandi)!"
+
     elif cmd == "pwd":
         output = cwd
 
@@ -1704,6 +1708,7 @@ def execute_command():
             "  echo <text> > <file>        - faylga matn yozadi\n"
             "  check                       - bosqichni tekshirish\n"
             "  status                      - joriy bosqich ma'lumotlari\n"
+            "  reset                       - joriy bosqich fayllarini yangilash / tozalash\n"
             "  ctf1 / ctf2                 - CTF 1 yoki CTF 2 moduliga o'tish\n"
             "  clear                       - ekranni tozalash"
         )
