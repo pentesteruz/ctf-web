@@ -345,11 +345,10 @@ def seed_student(username):
         k12 = generate_random_key("CONF12-")
         cursor.execute("INSERT INTO answers (username, stage, expected) VALUES (?, 12, ?)", (username, k12))
 
-    # Quiz 13
+    # Quiz 13 (Line number of isolated word)
     cursor.execute("SELECT expected FROM answers WHERE username = ? AND stage = 13", (username,))
     if not cursor.fetchone():
-        k13 = "BiGs0Z" + generate_random_key("", length=4)
-        cursor.execute("INSERT INTO answers (username, stage, expected) VALUES (?, 13, ?)", (username, k13))
+        cursor.execute("INSERT INTO answers (username, stage, expected) VALUES (?, 13, ?)", (username, "23"))
 
     # Quiz 14
     cursor.execute("SELECT expected FROM answers WHERE username = ? AND stage = 14", (username,))

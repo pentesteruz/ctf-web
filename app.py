@@ -107,9 +107,9 @@ QUIZZES_CTF2 = {
         "guide": "cat ~/quiz2/README.txt"
     },
     3: {
-        "title": "quiz3: Aniq so'zni qidirish (Word matching)",
+        "title": "quiz3: Aniq so'zni qidirish va uning qator raqamini topish",
         "commands": "grep, cat",
-        "description": "~/quiz3/mixed_words.txt ichidagi ko'plab soxta so'zlar orasidan mustaqil BiGs0Z kalitini ajratib oling va ~/quiz3/answer.txt ga yozing.",
+        "description": "~/quiz3/mixed_words.txt ichidagi o'xshash so'zlar orasidan mustaqil 'BiGs0Z' so'zining qator raqamini toping va ~/quiz3/answer.txt ga yozing.",
         "guide": "cat ~/quiz3/README.txt"
     },
     4: {
@@ -223,9 +223,9 @@ HINTS_CTF2 = {
         "hint3": "🚨 So'nggi maslahat: 'chmod +r ~/quiz2/confidential.txt && cat ~/quiz2/confidential.txt > ~/quiz2/answer.txt' qiling va 'check' bering!"
     },
     3: {
-        "hint1": "💡 Maslahat (1-daraja): Oddiy 'grep' boshqa so'zlarni ham chiqarib yuboradi. 'grep' ning to'liq so'zni topuvchi parametrini qidiring.",
-        "hint2": "💡 Maslahat (2-daraja): Aniq to'liq so'z chegarasi (word boundary) bo'yicha qidiruvchi parametr: '-w'. Misol: 'grep -w BiGs0Z file'.",
-        "hint3": "🚨 So'nggi maslahat: 'grep -w BiGs0Z ~/quiz3/mixed_words.txt' orqali chiqqan aniq so'zni ~/quiz3/answer.txt ga yozing!"
+        "hint1": "💡 Maslahat (1-daraja): Fayl ichidagi yuzlab soxta so'zlar orasidan aynan mustaqil 'BiGs0Z' so'zini ajratib olish va uning qator raqamini ko'rsatish talab qilinadi.",
+        "hint2": "💡 Maslahat (2-daraja): Qidiruv vositasining so'z chegarasi (-w) hamda qator raqamini ko'rsatish (-n) parametrlarini birgalikda ishlatib ko'ring.",
+        "hint3": "🚨 So'nggi maslahat: 'grep -wn BiGs0Z ~/quiz3/mixed_words.txt' orqali chiqqan qator raqamini (23) ~/quiz3/answer.txt ga yozing!"
     },
     4: {
         "hint1": "💡 Maslahat (1-daraja): Shovqinli qatorlarni filtrlab tashlash (invert-match) yoki katta-kichik harflarni e'tiborsiz qoldirish kerak.",
@@ -770,9 +770,8 @@ def _populate_ctf2_fs(fs, username, stage, answers):
             "content": k12
         }
 
-    # ── quiz3: grep -w so'z chegarasi ──
+    # ── quiz3: grep -w va -n (so'z va qator raqami) ──
     if stage >= 3:
-        k13 = answers.get(13, "BiGs0Z_REAL")
         fake_words = [
             "not_BiGs0Z", "BiGs0Z_fake", "testBiGs0Z123", "fake_BiGs0Z_word",
             "BiGs0Z_old", "BiGs0Zextra", "sample_BiGs0Z", "BiGs0Z_v2",
@@ -780,10 +779,10 @@ def _populate_ctf2_fs(fs, username, stage, answers):
         ]
         lines = []
         for i in range(1, 40):
-            lines.append(f"qator {i}: {fake_words[i % len(fake_words)]}")
-        lines.insert(22, f"qator 23: {k13}")
+            lines.append(fake_words[i % len(fake_words)])
+        lines.insert(22, "BiGs0Z")
         for i in range(41, 70):
-            lines.append(f"qator {i}: {fake_words[i % len(fake_words)]}")
+            lines.append(fake_words[i % len(fake_words)])
 
         fs[f"/home/{username}/quiz3"] = {
             "type": "dir", "owner": username, "mode": "755",
@@ -793,14 +792,13 @@ def _populate_ctf2_fs(fs, username, stage, answers):
             "type": "file", "owner": username, "mode": "644",
             "content": (
                 "========================================\n"
-                "📌 QUIZ 3: Aniq so'zni qidirish (Word matching)\n"
+                "📌 QUIZ 3: Aniq so'zni va uning qator raqamini topish\n"
                 "========================================\n"
-                "🎯 Mavzu: grep\n\n"
                 "📝 Vazifa:\n"
-                "  'mixed_words.txt' ichida juda ko'p o'xshash soxta so'zlar bor (not_BiGs0Z, BiGs0Z_fake...).\n"
-                "  Ularning orasida aynan bitta mustaqil to'liq so'z turibdi.\n"
-                "  Oddiy grep ish bermaydi, siz aynan to'liq so'zni filtrlashingiz kerak.\n"
-                "  To'g'ri kalitni topib, 'answer.txt' ga yozing.\n\n"
+                "  'mixed_words.txt' ichida yuzlab o'xshash soxta so'zlar bor.\n"
+                "  Sizga aynan kerakli so'z: 'BiGs0Z'\n"
+                "  Ushbu mustaqil 'BiGs0Z' so'zi faylning nechanchi qatorida\n"
+                "  joylashganini aniqlang va o'sha qator raqamini 'answer.txt' fayliga yozing.\n\n"
                 "✅ Tekshirish: check\n"
                 "========================================"
             )
@@ -1323,7 +1321,7 @@ def check_quiz():
             expected = db.get_student_answers(username).get(4, "")
             if f in fs and fs[f]["type"] == "file":
                 given = fs[f]["content"].strip().replace(" ", "").replace("\n", "")
-                if given == expected:
+                if expected in given:
                     passed = True
 
         elif stage == 5:
@@ -1331,7 +1329,7 @@ def check_quiz():
             expected = db.get_student_answers(username).get(5, "")
             if f in fs and fs[f]["type"] == "file":
                 given = fs[f]["content"].strip().replace(" ", "").replace("\n", "")
-                if given == expected:
+                if expected in given:
                     passed = True
 
         elif stage == 6:
@@ -1381,7 +1379,7 @@ def check_quiz():
             has_exec = ("x" in mode_dir or mode_dir in ("755", "777", "775", "111", "555"))
             if f in fs and fs[f]["type"] == "file" and has_exec:
                 given = fs[f]["content"].strip().replace(" ", "").replace("\n", "")
-                if given == expected:
+                if expected in given:
                     passed = True
 
         # quiz2: confidential.txt ga read ruxsati berilgan va kalit ko'chirilgan
@@ -1392,16 +1390,16 @@ def check_quiz():
             has_read = ("r" in mode_file or "x" in mode_file or mode_file in ("644", "755", "777", "444", "666", "x"))
             if f in fs and fs[f]["type"] == "file" and has_read:
                 given = fs[f]["content"].strip().replace(" ", "").replace("\n", "")
-                if given == expected:
+                if expected in given:
                     passed = True
 
-        # quiz3: mixed_words.txt dan to'liq so'z BiGs0Z... topilgan
+        # quiz3: mixed_words.txt dan to'liq so'z BiGs0Z qator raqami (23) topilgan
         elif stage == 3:
             f = f"/home/{username}/quiz3/answer.txt"
-            expected = db.get_student_answers(username).get(13, "")
             if f in fs and fs[f]["type"] == "file":
                 given = fs[f]["content"].strip().replace(" ", "").replace("\n", "")
-                if expected in given:
+                # 23 (qator raqami) yoki BiGs0Z bo'lsa ham qabul qilamiz
+                if "23" in given or "BiGs0Z" in given:
                     passed = True
 
         # quiz4: server_log.txt dan auth_token topilgan
@@ -1445,7 +1443,7 @@ def check_quiz():
             f = f"/home/{username}/quiz8/answer.txt"
             if f in fs and fs[f]["type"] == "file":
                 given = fs[f]["content"].strip().replace(" ", "").replace("\n", "")
-                if given == "345":
+                if "345" in given:
                     passed = True
 
         # quiz9: cleanup/ dan bo'sh bo'lmagan fayl kaliti topilgan
