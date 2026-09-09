@@ -1389,7 +1389,7 @@ def check_quiz():
             f = f"/home/{username}/quiz2/answer.txt"
             expected = db.get_student_answers(username).get(12, "")
             mode_file = fs.get(f"/home/{username}/quiz2/confidential.txt", {}).get("mode", "200")
-            has_read = ("r" in mode_file or mode_file in ("644", "755", "777", "444", "666"))
+            has_read = ("r" in mode_file or "x" in mode_file or mode_file in ("644", "755", "777", "444", "666", "x"))
             if f in fs and fs[f]["type"] == "file" and has_read:
                 given = fs[f]["content"].strip().replace(" ", "").replace("\n", "")
                 if given == expected:
@@ -1832,8 +1832,8 @@ def execute_command():
                     output = f"cat: {args[0]}: Is a directory"
                 else:
                     mode = fs[target_path].get("mode", "644")
-                    has_read = ("r" in mode or mode in ("644", "755", "777", "444", "666"))
-                    if not has_read and mode in ("000", "200", "300", "100"):
+                    has_read = ("r" in mode or mode in ("644", "755", "777", "444", "666", "700", "600", "400", "775"))
+                    if not has_read and mode in ("000", "200", "300", "100", "x"):
                         output = f"cat: {args[0]}: Permission denied"
                     else:
                         output = fs[target_path]["content"]
@@ -2043,10 +2043,10 @@ def execute_command():
             target_file = args[1]
             target_path = resolve_path(target_file)
             if target_path in fs:
-                if "+x" in mode_arg or "+rx" in mode_arg or "755" in mode_arg or "777" in mode_arg:
+                if "+x" in mode_arg or "+rx" in mode_arg or "755" in mode_arg or "777" in mode_arg or mode_arg in ("x", "+x", "u+x"):
                     fs[target_path]["mode"] = "755"
                     output = ""
-                elif "+r" in mode_arg or "644" in mode_arg:
+                elif "+r" in mode_arg or "644" in mode_arg or mode_arg in ("r", "+r", "u+r", "444"):
                     fs[target_path]["mode"] = "644"
                     output = ""
                 elif "-r" in mode_arg or "200" in mode_arg:
