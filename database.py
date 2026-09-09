@@ -140,6 +140,7 @@ def init_db():
             "ALTER TABLE progress ADD COLUMN IF NOT EXISTS ctf1_stage INTEGER DEFAULT 1;",
             "ALTER TABLE progress ADD COLUMN IF NOT EXISTS ctf2_stage INTEGER DEFAULT 1;",
             "ALTER TABLE progress ADD COLUMN IF NOT EXISTS active_ctf INTEGER DEFAULT 1;",
+            "ALTER TABLE progress ADD COLUMN IF NOT EXISTS vfs_data TEXT;",
             "ALTER TABLE attempts ADD COLUMN IF NOT EXISTS ctf_id INTEGER DEFAULT 1;"
         ]:
             try:
@@ -152,6 +153,7 @@ def init_db():
             "ALTER TABLE progress ADD COLUMN ctf1_stage INTEGER DEFAULT 1;",
             "ALTER TABLE progress ADD COLUMN ctf2_stage INTEGER DEFAULT 1;",
             "ALTER TABLE progress ADD COLUMN active_ctf INTEGER DEFAULT 1;",
+            "ALTER TABLE progress ADD COLUMN vfs_data TEXT;",
             "ALTER TABLE attempts ADD COLUMN ctf_id INTEGER DEFAULT 1;"
         ]:
             try:
@@ -551,3 +553,31 @@ def reset_student(username):
     conn.commit()
     conn.close()
     seed_student(username)
+
+
+def save_user_vfs(username, fs):
+    try:
+        import json
+        data_str = json.dumps(fs)
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("UPDATE progress SET vfs_data = ? WHERE username = ?", (data_str, username))
+        conn.commit()
+        conn.close()
+    except Exception:
+        pass
+
+
+def load_user_vfs(username):
+    try:
+        import json
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT vfs_data FROM progress WHERE username = ?", (username,))
+        row = cursor.fetchone()
+        conn.close()
+        if row and row.get("vfs_data"):
+            return json.loads(row["vfs_data"])
+    except Exception:
+        pass
+    return None

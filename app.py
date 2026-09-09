@@ -1084,12 +1084,18 @@ USER_FILESYSTEMS = {}
 
 def get_fs(username):
     if username not in USER_FILESYSTEMS:
-        USER_FILESYSTEMS[username] = get_user_fs(username)
+        saved = db.load_user_vfs(username)
+        if saved:
+            USER_FILESYSTEMS[username] = saved
+        else:
+            USER_FILESYSTEMS[username] = get_user_fs(username)
+            db.save_user_vfs(username, USER_FILESYSTEMS[username])
     return USER_FILESYSTEMS[username]
 
 
 def sync_fs(username):
     USER_FILESYSTEMS[username] = get_user_fs(username)
+    db.save_user_vfs(username, USER_FILESYSTEMS[username])
     return USER_FILESYSTEMS[username]
 
 
@@ -1266,6 +1272,7 @@ def save_file():
         fs[parent_dir]["children"].append(filename)
 
     fs[path] = {"type": "file", "owner": username, "mode": "644", "content": content}
+    db.save_user_vfs(username, fs)
     return jsonify({"status": "ok", "message": f"Fayl saqlandi: {path}"})
 
 
@@ -2148,6 +2155,7 @@ def execute_command():
     else:
         output = f"bash: {cmd}: command not found"
 
+    db.save_user_vfs(username, fs)
     return jsonify({"output": output, "cwd": cwd})
 
 
