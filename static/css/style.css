@@ -730,7 +730,12 @@ body {
   overflow-y: auto;
   flex-direction: column;
   padding-bottom: 1rem;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
+
 
 .cheatsheet-grid {
   display: grid;

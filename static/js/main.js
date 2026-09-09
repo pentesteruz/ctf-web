@@ -331,6 +331,14 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (btnRefreshLb) btnRefreshLb.addEventListener("click", fetchLeaderboard);
 
+  // ── Cheatsheet copy protection ──
+  const cheatsheetTab = document.getElementById("cheatsheet-tab");
+  if (cheatsheetTab) {
+    cheatsheetTab.addEventListener("copy", (e) => e.preventDefault());
+    cheatsheetTab.addEventListener("cut", (e) => e.preventDefault());
+    cheatsheetTab.addEventListener("contextmenu", (e) => e.preventDefault());
+  }
+
   // ── Handle 401 from terminal API (session expired mid-session) ──
   window.handleAuthExpired = () => {
     alert("Sessiya muddati tugadi. Qayta kirishingiz kerak.");
