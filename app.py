@@ -1555,10 +1555,16 @@ def check_quiz():
                 passed = True
 
     if passed:
+        fail_cnt = db.get_stage_fail_count(username, stage, ctf=active_ctf)
+        score_awarded = 1 if fail_cnt <= 3 else 0
+        db.record_stage_score(username, active_ctf, stage, score_awarded)
         db.log_attempt(username, stage, "pass", ctf=active_ctf)
+
         next_stage = stage + 1
         db.update_student_stage(username, next_stage)
         sync_fs(username)
+
+        score_note = "⭐ A'lo! Bosqich mustaqil yechildi (+1 ball)!" if score_awarded == 1 else "⚠️ Kalit qabul qilindi, ammo ko'p urinish/maslahat tufayli ball berilmadi (0 ball)."
 
         # CTF 1 yakunlangan holat (Stage 10 muvaffaqiyatli topshirildi)
         if active_ctf == 1 and stage == 10:
@@ -1574,6 +1580,7 @@ def check_quiz():
                 "message": (
                     "========================================================\n"
                     "🎉🎉🎉 TABRIKLAYMIZ! SIZ CTF 1'NI TO'LIQ TUGATDINGIZ! 🎉🎉🎉\n"
+                    f"{score_note}\n\n"
                     f"Sizning 1-bosqich flag'ingiz:\n\n"
                     f"    {flag1}\n\n"
                     "🔓 SIZGA CTF 2 (ILG'OR KIBERXAVFSIZLIK) OCHILDI!\n"
@@ -1595,6 +1602,7 @@ def check_quiz():
                 "message": (
                     "====================================================================\n"
                     "👑👑👑 SIZ CTF 2'NI VA BUTUN CTF PLATFORMASINI TO'LIQ ZABT ETDINGIZ! 👑👑👑\n"
+                    f"{score_note}\n\n"
                     f"Sizning Final CTF 2 Flag'ingiz:\n\n"
                     f"    {flag2}\n\n"
                     "🏆 Siz haqiqiy Linux va Kiberxavfsizlik Mutaxassisisiz!\n"
@@ -1611,6 +1619,7 @@ def check_quiz():
                 "message": (
                     "========================================================\n"
                     f"✅ TABRIKLAYMIZ! quiz{stage} muvaffaqiyatli bajarildi (CTF {ctf_num}).\n"
+                    f"{score_note}\n"
                     f"🔓 quiz{next_stage} ochildi!\n"
                     f"➡️  O'tish uchun: cd ~/quiz{next_stage}\n"
                     f"📋 Vazifani ko'rish uchun: cat ~/quiz{next_stage}/README.txt\n"

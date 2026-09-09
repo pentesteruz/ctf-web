@@ -134,6 +134,19 @@ def init_db():
     """)
     conn.commit()
 
+    # Stage scores table (tracks 1 = clean pass, 0 = assisted pass / over 3 attempts)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS stage_scores (
+            username TEXT,
+            ctf_id INTEGER DEFAULT 1,
+            stage INTEGER,
+            score INTEGER DEFAULT 1,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (username, ctf_id, stage)
+        );
+    """)
+    conn.commit()
+
     # Migration for existing tables
     if conn.is_pg:
         for q in [
@@ -494,7 +507,25 @@ def update_student_stage(username, next_stage):
         )
     conn.commit()
     conn.close()
+def record_stage_score(username, ctf_id, stage, score):
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO stage_scores (username, ctf_id, stage, score) 
+        VALUES (?, ?, ?, ?)
+        ON CONFLICT (username, ctf_id, stage) DO UPDATE SET score = EXCLUDED.score;
+    """, (username, ctf_id, stage, score))
+    conn.commit()
+    conn.close()
 
+
+def get_total_clean_score(username):
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT COALESCE(SUM(score), 0) as total FROM stage_scores WHERE username = ?", (username,))
+    row = cursor.fetchone()
+    conn.close()
+    return row["total"] if row else 0
 
 def save_student_flag(username, flag, level=1):
     conn = get_db()
@@ -529,12 +560,14 @@ def get_leaderboard():
                COALESCE(p.active_ctf, 1) as active_ctf,
                (CASE WHEN COALESCE(p.active_ctf, 1) = 2 THEN COALESCE(p.ctf2_stage, 1) ELSE COALESCE(p.ctf1_stage, 1) END) as current_stage,
                p.updated_at, f.flag,
-               ((CASE WHEN COALESCE(p.ctf1_stage, 1) > 10 THEN 10 ELSE COALESCE(p.ctf1_stage, 1) - 1 END) +
-                (CASE WHEN COALESCE(p.ctf2_stage, 1) > 10 THEN 10 ELSE COALESCE(p.ctf2_stage, 1) - 1 END)) as pass_count,
+               COALESCE((SELECT SUM(score) FROM stage_scores s WHERE s.username = p.username), 
+                        ((CASE WHEN COALESCE(p.ctf1_stage, 1) > 10 THEN 10 ELSE COALESCE(p.ctf1_stage, 1) - 1 END) +
+                         (CASE WHEN COALESCE(p.ctf2_stage, 1) > 10 THEN 10 ELSE COALESCE(p.ctf2_stage, 1) - 1 END))) as pass_count,
                (SELECT COUNT(*) FROM attempts a WHERE a.username = p.username AND a.result = 'fail') as fail_count
         FROM progress p
         LEFT JOIN flags f ON p.username = f.username
         ORDER BY 
+            pass_count DESC,
             (COALESCE(p.ctf1_stage, 1) + COALESCE(p.ctf2_stage, 1)) DESC,
             p.updated_at ASC;
     """)
