@@ -1782,7 +1782,9 @@ def execute_command():
                 if long_format:
                     prefix = "d" if itype == "dir" else "-"
                     perm = "rwxr-xr-x" if itype == "dir" or "x" in imode else "rw-r--r--"
-                    result_items.append(f"{prefix}{perm} 1 {iowner} {iowner} 4096 Sep  9 {item}")
+                    fcontent = item_meta.get("content", "")
+                    sz = 4096 if itype == "dir" else len(fcontent.encode("utf-8"))
+                    result_items.append(f"{prefix}{perm} 1 {iowner} {iowner} {sz:5d} Sep  9 {item}")
                 else:
                     prefix = "📁 " if itype == "dir" else "📄 "
                     result_items.append(f"{prefix}{item}")
@@ -1990,18 +1992,45 @@ def execute_command():
                         continue
                 # Size check
                 if size_filter:
-                    if size_filter.endswith("c"):
-                        target_sz = int(size_filter[:-1])
-                        if byte_size != target_sz:
-                            continue
-                    elif size_filter.startswith("+") and size_filter[1:].endswith("c"):
-                        min_sz = int(size_filter[1:-1])
-                        if byte_size <= min_sz:
-                            continue
-                    elif size_filter.startswith("+"):
-                        min_sz = int(size_filter[1:])
-                        if byte_size <= min_sz:
-                            continue
+                    sz_str = size_filter.strip().lower()
+                    mode_sign = None
+                    if sz_str.startswith("+"):
+                        mode_sign = "+"
+                        sz_str = sz_str[1:]
+                    elif sz_str.startswith("-"):
+                        mode_sign = "-"
+                        sz_str = sz_str[1:]
+
+                    # Unit parsing: 'c' (bytes), 'b' (512b blocks or bytes in beginner usage), 'k' (kb), 'm' (mb)
+                    multiplier = 1
+                    if sz_str.endswith("c"):
+                        multiplier = 1
+                        num_part = sz_str[:-1]
+                    elif sz_str.endswith("k"):
+                        multiplier = 1024
+                        num_part = sz_str[:-1]
+                    elif sz_str.endswith("m"):
+                        multiplier = 1024 * 1024
+                        num_part = sz_str[:-1]
+                    elif sz_str.endswith("b"):
+                        multiplier = 1  # in practice beginners expect 1024b = 1024 bytes
+                        num_part = sz_str[:-1]
+                    else:
+                        num_part = sz_str
+
+                    try:
+                        target_bytes = int(num_part) * multiplier
+                        if mode_sign == "+":
+                            if byte_size <= target_bytes:
+                                continue
+                        elif mode_sign == "-":
+                            if byte_size >= target_bytes:
+                                continue
+                        else:
+                            if byte_size != target_bytes:
+                                continue
+                    except ValueError:
+                        pass
 
                 rel = path_key.replace(f"/home/{username}", "~")
                 results.append(rel)
