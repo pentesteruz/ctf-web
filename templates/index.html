@@ -212,92 +212,107 @@
     <section id="cheatsheet-tab" class="tab-content">
       <div class="cheatsheet-grid">
 
+        <!-- 1. Navigatsiya -->
         <div class="cheat-card">
-          <h4>📁 Navigatsiya va Kataloglar</h4>
+          <h4>📁 Navigatsiya & Kataloglar</h4>
           <div class="cheat-cmd-list">
-            <div class="cheat-item"><span class="cheat-code">pwd</span><span>Joriy papka manzili</span></div>
-            <div class="cheat-item"><span class="cheat-code">ls</span><span>Fayllar ro'yxati</span></div>
-            <div class="cheat-item"><span class="cheat-code">ls -la</span><span>Yashirin fayllar bilan</span></div>
-            <div class="cheat-item"><span class="cheat-code">cd &lt;dir&gt;</span><span>Papkaga o'tish</span></div>
-            <div class="cheat-item"><span class="cheat-code">cd ~</span><span>Uy papkasiga qaytish</span></div>
+            <div class="cheat-item"><span class="cheat-code">pwd</span><span>Joriy papka manzilini ko'rish</span></div>
+            <div class="cheat-item"><span class="cheat-code">ls</span><span>Fayllar ro'yxatini ko'rish</span></div>
+            <div class="cheat-item"><span class="cheat-code">ls -la</span><span>Barcha yashirin fayllar va huquqlar</span></div>
+            <div class="cheat-item"><span class="cheat-code">cd &lt;dir&gt;</span><span>Ko'rsatilgan katalogga o'tish</span></div>
+            <div class="cheat-item"><span class="cheat-code">cd ..</span><span>Bitta yuqori katalogga qaytish</span></div>
             <div class="cheat-item"><span class="cheat-code">mkdir &lt;name&gt;</span><span>Yangi papka yaratish</span></div>
           </div>
         </div>
 
+        <!-- 2. Fayllar bilan ishlash -->
         <div class="cheat-card">
-          <h4>📄 Fayllar bilan Ishlash</h4>
+          <h4>📄 Fayl Yaratish & Tahrirlash</h4>
           <div class="cheat-cmd-list">
-            <div class="cheat-item"><span class="cheat-code">touch &lt;file&gt;</span><span>Bo'sh fayl yaratish</span></div>
-            <div class="cheat-item"><span class="cheat-code">cat &lt;file&gt;</span><span>Fayl ichini o'qish</span></div>
-            <div class="cheat-item"><span class="cheat-code">nano &lt;file&gt;</span><span>Faylni tahrirlash (editor)</span></div>
-            <div class="cheat-item"><span class="cheat-code">echo "text" &gt; file</span><span>Faylga matn yozish</span></div>
+            <div class="cheat-item"><span class="cheat-code">touch &lt;file&gt;</span><span>Yangi bo'sh fayl hosil qilish</span></div>
+            <div class="cheat-item"><span class="cheat-code">cat &lt;file&gt;</span><span>Fayl tarkibini ekranga chiqarish</span></div>
+            <div class="cheat-item"><span class="cheat-code">nano &lt;file&gt;</span><span>Faylni tahrirlash (Web UI Editor)</span></div>
+            <div class="cheat-item"><span class="cheat-code">echo "txt" &gt; f</span><span>Faylga matn yozish (qayta yozish)</span></div>
             <div class="cheat-item"><span class="cheat-code">rm &lt;file&gt;</span><span>Faylni o'chirish</span></div>
-            <div class="cheat-item"><span class="cheat-code">rm -r &lt;dir&gt;</span><span>Papkani o'chirish</span></div>
+            <div class="cheat-item"><span class="cheat-code">rm -r &lt;dir&gt;</span><span>Papkani rekursiv o'chirish</span></div>
           </div>
         </div>
 
+        <!-- 3. Qidiruv va Filtr (grep) -->
         <div class="cheat-card">
-          <h4>🔍 Qidirish va O'qish</h4>
+          <h4>🔍 Qidiruv & Filtrlash (grep)</h4>
           <div class="cheat-cmd-list">
-            <div class="cheat-item"><span class="cheat-code">head -n 10 file</span><span>Dastlabki 10 qator</span></div>
-            <div class="cheat-item"><span class="cheat-code">tail -n 10 file</span><span>Oxirgi 10 qator</span></div>
-            <div class="cheat-item"><span class="cheat-code">grep "pattern" file</span><span>Matn qidirish</span></div>
-            <div class="cheat-item"><span class="cheat-code">find . -name "*.txt"</span><span>Fayl qidirish</span></div>
-            <div class="cheat-item"><span class="cheat-code">head -n 155 file | tail -5</span><span>150-155 qatorlar</span></div>
+            <div class="cheat-item"><span class="cheat-code">grep "pat" f</span><span>Fayldan mos qatorlarni qidirish</span></div>
+            <div class="cheat-item"><span class="cheat-code">grep -w "word" f</span><span>Aynan to'liq so'z chegarasi</span></div>
+            <div class="cheat-item"><span class="cheat-code">grep -i "key" f</span><span>Registrga (katta/kichik) qaramay</span></div>
+            <div class="cheat-item"><span class="cheat-code">grep -v "txt" f</span><span>Inkor qilish (mos kelmaganlar)</span></div>
+            <div class="cheat-item"><span class="cheat-code">grep -n "txt" f</span><span>Topilgan satr raqamini ko'rsatish</span></div>
+            <div class="cheat-item"><span class="cheat-code">grep -c "txt" f</span><span>Mos kelgan qatorlar sonini sanash</span></div>
           </div>
         </div>
 
+        <!-- 4. Fayllarni qidirish (find) -->
         <div class="cheat-card">
-          <h4>🔐 Ruxsatlar va CTF</h4>
+          <h4>🔎 Tizimdan Qidiruv (find)</h4>
           <div class="cheat-cmd-list">
-            <div class="cheat-item"><span class="cheat-code">chmod +x script.sh</span><span>Ishga tushirish huquqi</span></div>
-            <div class="cheat-item"><span class="cheat-code">./script.sh</span><span>Skriptni ishga tushirish</span></div>
-            <div class="cheat-item"><span class="cheat-code">sudo chown user file</span><span>Fayl egasini o'zgartirish</span></div>
-            <div class="cheat-item"><span class="cheat-code">ls -l</span><span>Ruxsatlar va egasi</span></div>
-            <div class="cheat-item"><span class="cheat-code">check</span><span>Bosqich tekshiruvi</span></div>
-            <div class="cheat-item"><span class="cheat-code">status</span><span>Joriy vazifa holati</span></div>
+            <div class="cheat-item"><span class="cheat-code">find . -name "*.txt"</span><span>Nomi bo'yicha qidirish</span></div>
+            <div class="cheat-item"><span class="cheat-code">find . -type f</span><span>Faqat oddiy fayllarni topish</span></div>
+            <div class="cheat-item"><span class="cheat-code">find . -type d</span><span>Faqat kataloglarni (papka) topish</span></div>
+            <div class="cheat-item"><span class="cheat-code">find . -size 1024c</span><span>Aynan 1024 bayt hajmli fayl</span></div>
+            <div class="cheat-item"><span class="cheat-code">find . -size +0c</span><span>Bo'sh bo'lmagan fayllar</span></div>
+            <div class="cheat-item"><span class="cheat-code">find . -perm 777</span><span>Xavfli to'liq ochiq (777) fayllar</span></div>
           </div>
         </div>
 
+        <!-- 5. Matn tahlili va Sanash -->
         <div class="cheat-card">
-          <h4>💡 CTF Yechish Yo'riqnomasi</h4>
+          <h4>📊 Ko'rish & Matn Tahlili</h4>
           <div class="cheat-cmd-list">
-            <div class="cheat-item"><span class="cheat-code">quiz4</span><span>grep "KEY-" bigfile.log</span></div>
-            <div class="cheat-item"><span class="cheat-code">quiz5</span><span>grep "PASS-" bigfile2.txt</span></div>
-            <div class="cheat-item"><span class="cheat-code">quiz9</span><span>cd level1/level2 → ls -la</span></div>
-            <div class="cheat-item"><span class="cheat-code">Tab</span><span>Buyruq / fayl nomini to'ldirish</span></div>
-            <div class="cheat-item"><span class="cheat-code">↑ ↓</span><span>Buyruqlar tarixi</span></div>
+            <div class="cheat-item"><span class="cheat-code">head -n 10 file</span><span>Dastlabki 10 ta qator</span></div>
+            <div class="cheat-item"><span class="cheat-code">tail -n 10 file</span><span>Oxirgi 10 ta qator</span></div>
+            <div class="cheat-item"><span class="cheat-code">wc -l &lt;file&gt;</span><span>Qatorlar sonini aniqlash</span></div>
+            <div class="cheat-item"><span class="cheat-code">wc -w &lt;file&gt;</span><span>So'zlar sonini hisoblash</span></div>
+            <div class="cheat-item"><span class="cheat-code">wc -c &lt;file&gt;</span><span>Baytlar hajmini hisoblash</span></div>
+            <div class="cheat-item"><span class="cheat-code">cmd1 | cmd2</span><span>Quvur (Piping): natijani uzatish</span></div>
           </div>
         </div>
 
+        <!-- 6. Ruxsatlar va Huquqlar -->
         <div class="cheat-card">
-          <h4>🔥 CTF 2: Ilg'or Parametrlar</h4>
+          <h4>🔐 Ruxsatlar & Egalik (Security)</h4>
           <div class="cheat-cmd-list">
-            <div class="cheat-item"><span class="cheat-code">grep -w "BiGs0Z" file</span><span>To'liq so'z chegarasi</span></div>
-            <div class="cheat-item"><span class="cheat-code">grep -i "key" file</span><span>Registrga qaramay qidirish</span></div>
-            <div class="cheat-item"><span class="cheat-code">grep -v "DEBUG" file</span><span>Shovqinni inkor qilish</span></div>
-            <div class="cheat-item"><span class="cheat-code">grep -n "key" file</span><span>Qator raqami bilan topish</span></div>
-            <div class="cheat-item"><span class="cheat-code">find . -size 1024c</span><span>Aynan 1024 baytli fayl</span></div>
-            <div class="cheat-item"><span class="cheat-code">find . -perm 777</span><span>777 ruxsatli xavfli fayl</span></div>
-            <div class="cheat-item"><span class="cheat-code">find . -type f</span><span>Faqat oddiy fayllar</span></div>
-            <div class="cheat-item"><span class="cheat-code">chmod +r file</span><span>Faylga o'qish huquqi</span></div>
+            <div class="cheat-item"><span class="cheat-code">chmod +r &lt;file&gt;</span><span>Faylga o'qish (read) ruxsati</span></div>
+            <div class="cheat-item"><span class="cheat-code">chmod +x &lt;file&gt;</span><span>Ishga tushirish (exec) ruxsati</span></div>
+            <div class="cheat-item"><span class="cheat-code">chmod 755 &lt;dir&gt;</span><span>Katalogga to'liq ruxsat (rwxr-xr-x)</span></div>
+            <div class="cheat-item"><span class="cheat-code">chmod 644 &lt;file&gt;</span><span>Standart o'qish/yozish huquqi</span></div>
+            <div class="cheat-item"><span class="cheat-code">sudo chown u f</span><span>Fayl egasini o'zgartirish</span></div>
+            <div class="cheat-item"><span class="cheat-code">./script.sh</span><span>Joriy skriptni ishga tushirish</span></div>
           </div>
         </div>
 
+        <!-- 7. Platforma Buyruqlari -->
         <div class="cheat-card">
-          <h4>🗺️ 20 Bosqich Xaritasi (CTF 1 & 2)</h4>
+          <h4>⚡ Platforma & CTF Boshqaruvi</h4>
           <div class="cheat-cmd-list">
-            <div class="cheat-item"><span class="cheat-code">CTF 1 (quiz1-10)</span><span>Linux Asoslari va 1-Flag</span></div>
-            <div class="cheat-item"><span class="cheat-code">CTF 2 (quiz1)</span><span>chmod — yopiq papkaga kirish</span></div>
-            <div class="cheat-item"><span class="cheat-code">CTF 2 (quiz2)</span><span>chmod — o'qib bo'lmas faylni o'qish</span></div>
-            <div class="cheat-item"><span class="cheat-code">CTF 2 (quiz3)</span><span>grep -w — mustaqil so'zni ajratish</span></div>
-            <div class="cheat-item"><span class="cheat-code">CTF 2 (quiz4)</span><span>grep -i/-v — logdagi shovqinni filtr</span></div>
-            <div class="cheat-item"><span class="cheat-code">CTF 2 (quiz5)</span><span>find -size — 1024c baytli fayl</span></div>
-            <div class="cheat-item"><span class="cheat-code">CTF 2 (quiz6)</span><span>find -perm — 777 ruxsatli fayl</span></div>
-            <div class="cheat-item"><span class="cheat-code">CTF 2 (quiz7)</span><span>find -type f — oddiy faylni topish</span></div>
-            <div class="cheat-item"><span class="cheat-code">CTF 2 (quiz8)</span><span>grep -n — qator raqamini aniqlash</span></div>
-            <div class="cheat-item"><span class="cheat-code">CTF 2 (quiz9)</span><span>find/cleanup — bo'sh fayllarni ajratish</span></div>
-            <div class="cheat-item"><span class="cheat-code">CTF 2 (quiz10)</span><span>Final Lockbox & 2-FLAG! 🏆</span></div>
+            <div class="cheat-item"><span class="cheat-code">check</span><span>Joriy bosqich javobini tekshirish</span></div>
+            <div class="cheat-item"><span class="cheat-code">status</span><span>Joriy vazifa va ko'rsatmalarni ko'rish</span></div>
+            <div class="cheat-item"><span class="cheat-code">reset</span><span>Bosqich fayllarini yangilash / tozalash</span></div>
+            <div class="cheat-item"><span class="cheat-code">ctf1</span><span>CTF 1 (Linux Asoslari) ga o'tish</span></div>
+            <div class="cheat-item"><span class="cheat-code">ctf2</span><span>CTF 2 (Ilg'or Kiberxavfsizlik) ga o'tish</span></div>
+            <div class="cheat-item"><span class="cheat-code">clear</span><span>Terminal ekranini tozalash</span></div>
+          </div>
+        </div>
+
+        <!-- 8. Qulayliklar va Klaviaturadagi tugmalar -->
+        <div class="cheat-card">
+          <h4>💡 Qisqa Tugmalar & Maslahatlar</h4>
+          <div class="cheat-cmd-list">
+            <div class="cheat-item"><span class="cheat-code">Tab</span><span>Buyruq yoki fayl nomini avto-to'ldirish</span></div>
+            <div class="cheat-item"><span class="cheat-code">↑ / ↓</span><span>Avval kiritilgan buyruqlar tarixi</span></div>
+            <div class="cheat-item"><span class="cheat-code">~ (tilda)</span><span>Foydalanuvchining bosh papkasi (/home/user)</span></div>
+            <div class="cheat-item"><span class="cheat-code">. (nuqta)</span><span>Joriy turgan katalog</span></div>
+            <div class="cheat-item"><span class="cheat-code">.. (ikki nuqta)</span><span>Ota (yuqori) katalog</span></div>
+            <div class="cheat-item"><span class="cheat-code">help</span><span>Barcha buyruqlar qisqa ma'lumotnomasi</span></div>
           </div>
         </div>
 
