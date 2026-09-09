@@ -137,9 +137,9 @@ QUIZZES_CTF2 = {
         "guide": "cat ~/quiz7/README.txt"
     },
     8: {
-        "title": "quiz8: Qator raqamini aniqlash (Line number)",
-        "commands": "grep, cat",
-        "description": "~/quiz8/lines.txt ichidagi TARGET_SECRET so'zi aynan nechanchi qatorda joylashganini aniqlab, qator raqamini ~/quiz8/answer.txt ga yozing.",
+        "title": "quiz8: Qator tahlili (grep va wc)",
+        "commands": "grep, wc, cat",
+        "description": "~/quiz8/lines.txt ichidan TARGET_SECRET qator raqami hamda faylning umumiy qatorlar sonini aniqlang (format: QATOR|JAMI).",
         "guide": "cat ~/quiz8/README.txt"
     },
     9: {
@@ -248,9 +248,9 @@ HINTS_CTF2 = {
         "hint3": "🚨 So'nggi maslahat: 'find ~/quiz7/archive -type f' orqali chiqqan fayl tarkibini ~/quiz7/answer.txt ga ko'chiring!"
     },
     8: {
-        "hint1": "💡 Maslahat (1-daraja): 'grep' buyrug'i qidirilayotgan so'z qaysi qatorda turganini raqam bilan ko'rsatib bera oladi.",
-        "hint2": "💡 Maslahat (2-daraja): Qator raqami uchun '-n' parametrini qo'shing: 'grep -n TARGET_SECRET lines.txt'.",
-        "hint3": "🚨 So'nggi maslahat: 'grep -n TARGET_SECRET ~/quiz8/lines.txt' orqali chiqqan qator raqamini ~/quiz8/answer.txt ga yozing!"
+        "hint1": "💡 Maslahat (1-daraja): So'z turgan qator raqamini 'grep -n' orqali, faylning umumiy qatorlar sonini esa 'wc -l' orqali aniqlang.",
+        "hint2": "💡 Maslahat (2-daraja): 'grep -n TARGET_SECRET lines.txt' va 'wc -l lines.txt' buyruqlaridan chiqqan raqamlarni '|' bilan birlashtiring.",
+        "hint3": "🚨 So'nggi maslahat: Nishon qatori 345, umumiy qatorlar 500. answer.txt ga '345|500' deb yozing!"
     },
     9: {
         "hint1": "💡 Maslahat (1-daraja): Bo'sh bo'lmagan (hajmi 0 dan katta) faylni topish uchun 'find' dan foydalaning.",
@@ -1040,7 +1040,7 @@ def _populate_ctf2_fs(fs, username, stage, answers):
             "type": "file", "owner": username, "mode": "644", "content": k17
         }
 
-    # ── quiz8: grep -n qator raqami ──
+    # ── quiz8: grep -n va wc -l (qator va umumiy hajm tahlili) ──
     if stage >= 8:
         k18 = answers.get(18, "LINE18-DEFAULT")
         line_entries = []
@@ -1058,12 +1058,18 @@ def _populate_ctf2_fs(fs, username, stage, answers):
             "type": "file", "owner": username, "mode": "644",
             "content": (
                 "========================================\n"
-                "📌 QUIZ 8: Qator raqamini aniqlash (Line number)\n"
+                "📌 QUIZ 8: Qator tahlili (grep va wc)\n"
                 "========================================\n"
-                "🎯 Mavzu: grep\n\n"
+                "🎯 Mavzu: grep, wc\n\n"
                 "📝 Vazifa:\n"
-                "  'lines.txt' ichidagi TARGET_SECRET so'zi aynan nechanchi qatorda joylashganini\n"
-                "  aniqlang va aynan o'sha qator raqamini (masalan: 345) 'answer.txt' fayliga yozing.\n\n"
+                "  Siz avvalroq so'z turgan qator raqamini aniqlashni o'rgangan edingiz.\n"
+                "  Endi 'lines.txt' fayli ichidagi ma'lumotlarni tahlil qiling:\n"
+                "  1) 'TARGET_SECRET' so'zi nechanchi qatorda turganini aniqlang\n"
+                "  2) 'lines.txt' faylida jami (umumiy) nechta qator borligini aniqlang\n"
+                "  3) Javobni 'answer.txt' fayliga quyidagi formatda yozing:\n"
+                "     NISHON_QATORI|UMUMIY_QATORLAR\n"
+                "     (Masalan, agar 120-qatorda bo'lsa va jami 300 qator bo'lsa: 120|300)\n\n"
+                "💡 Eslatma: O'rtada vertikal chiziqcha (|) bo'lishi shart.\n"
                 "✅ Tekshirish: check\n"
                 "========================================"
             )
@@ -1516,12 +1522,12 @@ def check_quiz():
                 if expected in given:
                     passed = True
 
-        # quiz8: lines.txt da TARGET_SECRET nechanchi qatorda ekani (345)
+        # quiz8: lines.txt da TARGET_SECRET qatori va umumiy qatorlar: 345|500
         elif stage == 8:
             f = f"/home/{username}/quiz8/answer.txt"
             if f in fs and fs[f]["type"] == "file":
                 given = fs[f]["content"].strip().replace(" ", "").replace("\n", "")
-                if "345" in given:
+                if "345|500" in given or "345:500" in given:
                     passed = True
 
         # quiz9: cleanup/ dan bo'sh bo'lmagan fayl kaliti topilgan
@@ -1678,7 +1684,7 @@ def autocomplete_terminal():
         return posixpath.normpath(p)
 
     cmds = ["ls", "cd", "mkdir", "touch", "nano", "cat", "head", "tail", "rm",
-            "chmod", "chown", "check", "status", "reset", "clear", "help", "whoami", "pwd", "sudo", "find", "grep", "echo", "ctf1", "ctf2"]
+            "chmod", "chown", "check", "status", "reset", "clear", "help", "whoami", "pwd", "sudo", "find", "grep", "wc", "echo", "ctf1", "ctf2"]
 
     tokens = text.split()
     is_trailing_space = text.endswith(" ")
@@ -1780,6 +1786,7 @@ def execute_command():
             "  tail [-n K] <file>          - fayl oxiridan K ta qator\n"
             "  grep [-w -i -v -n] <p> <f>  - fayldan qidiruv (-w so'z, -i registr, -v inkor, -n qator raqami)\n"
             "  find <dir> [options]        - qidiruv (-name nom, -size hajmi, -perm huquqi, -type f/d)\n"
+            "  wc [-l -w -c] <file>        - qatorlar (-l), so'zlar (-w) va baytlar (-c) sonini sanash\n"
             "  rm [-r] <path>              - fayl yoki papkani o'chiradi\n"
             "  chmod <+x/+r/mode> <file>   - fayl yoki papka ruxsatini o'zgartiradi\n"
             "  sudo chown <u> <file>       - fayl egaligini o'zgartiradi\n"
@@ -2007,6 +2014,47 @@ def execute_command():
                         output = "\n".join(matched) if matched else ""
                 else:
                     output = f"grep: {target_file}: No such file or directory"
+
+    elif cmd == "wc":
+        if not args:
+            output = "wc: missing file operand"
+        else:
+            lines_flag = False
+            words_flag = False
+            bytes_flag = False
+            target_files = []
+            for a in args:
+                if a.startswith("-") and len(a) > 1:
+                    if "l" in a: lines_flag = True
+                    if "w" in a: words_flag = True
+                    if "c" in a: bytes_flag = True
+                else:
+                    target_files.append(a)
+
+            if not target_files:
+                output = "wc: missing file operand"
+            else:
+                out_lines = []
+                for tf in target_files:
+                    target_path = resolve_path(tf)
+                    if target_path in fs and fs[target_path]["type"] == "file":
+                        cnt = fs[target_path]["content"]
+                        l_count = len(cnt.splitlines()) if cnt else 0
+                        w_count = len(cnt.split()) if cnt else 0
+                        b_count = len(cnt.encode("utf-8")) if cnt else 0
+
+                        parts_wc = []
+                        if lines_flag or (not words_flag and not bytes_flag):
+                            parts_wc.append(str(l_count))
+                        if words_flag:
+                            parts_wc.append(str(w_count))
+                        if bytes_flag:
+                            parts_wc.append(str(b_count))
+                        parts_wc.append(tf)
+                        out_lines.append(" ".join(parts_wc))
+                    else:
+                        out_lines.append(f"wc: {tf}: No such file or directory")
+                output = "\n".join(out_lines)
 
     elif cmd == "find":
         search_dir = cwd
