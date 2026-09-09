@@ -923,7 +923,7 @@ def _populate_ctf2_fs(fs, username, stage, answers):
             "children": restricted_children
         }
 
-    # ── quiz7: find -type ──
+    # ── quiz7: find -type (labirint va soxta kataloglar) ──
     if stage >= 7:
         k17 = answers.get(17, "TYPE17-DEFAULT")
         fs[f"/home/{username}/quiz7"] = {
@@ -938,27 +938,105 @@ def _populate_ctf2_fs(fs, username, stage, answers):
                 "========================================\n"
                 "🎯 Mavzu: find\n\n"
                 "📝 Vazifa:\n"
-                "  'archive/' katalogida papka va fayllar aralashgan.\n"
-                "  Kataloglar orasidan aynan oddiy fayl (file) turiga tegishli 'vault_data' ni toping\n"
-                "  va undagi kalitni 'answer.txt' ga yozing.\n\n"
+                "  'archive/' katalogida o'nlab ichma-ich papkalar va soxta obyektlar bor.\n"
+                "  Tizimda 'vault_data' nomli bir nechta papkalar ham mavjud bo'lib, ular sizni chalg'itadi.\n"
+                "  Siz aynan oddiy fayl (file) turiga tegishli 'vault_data' ni topishingiz\n"
+                "  va undagi maxfiy kalitni 'answer.txt' ga ko'chirishingiz kerak.\n\n"
                 "✅ Tekshirish: check\n"
                 "========================================"
             )
         }
+        # Labirint strukturasi
         fs[f"/home/{username}/quiz7/archive"] = {
             "type": "dir", "owner": username, "mode": "755",
-            "children": ["backup_folder", "temp_dir", "vault_data"]
+            "children": ["backup", "temp", "storage", "vault_data", "logs"]
         }
-        fs[f"/home/{username}/quiz7/archive/backup_folder"] = {
-            "type": "dir", "owner": username, "mode": "755", "children": ["notes.txt"]
+        # 1-soxta: archive/vault_data bu katalog!
+        fs[f"/home/{username}/quiz7/archive/vault_data"] = {
+            "type": "dir", "owner": username, "mode": "755",
+            "children": ["dummy.txt"]
         }
-        fs[f"/home/{username}/quiz7/archive/backup_folder/notes.txt"] = {
-            "type": "file", "owner": username, "mode": "644", "content": "bu oddiy qoralama"
+        fs[f"/home/{username}/quiz7/archive/vault_data/dummy.txt"] = {
+            "type": "file", "owner": username, "mode": "644",
+            "content": "Bu papka, sizga oddiy fayl kerak edi!"
         }
-        fs[f"/home/{username}/quiz7/archive/temp_dir"] = {
+
+        # archive/backup
+        fs[f"/home/{username}/quiz7/archive/backup"] = {
+            "type": "dir", "owner": username, "mode": "755",
+            "children": ["daily", "weekly", "vault_data"]
+        }
+        # 2-soxta: archive/backup/vault_data bu ham katalog!
+        fs[f"/home/{username}/quiz7/archive/backup/vault_data"] = {
+            "type": "dir", "owner": username, "mode": "755",
+            "children": ["old.log"]
+        }
+        fs[f"/home/{username}/quiz7/archive/backup/vault_data/old.log"] = {
+            "type": "file", "owner": username, "mode": "644",
+            "content": "Bu ham papka!"
+        }
+        fs[f"/home/{username}/quiz7/archive/backup/daily"] = {
+            "type": "dir", "owner": username, "mode": "755", "children": ["data1.tar"]
+        }
+        fs[f"/home/{username}/quiz7/archive/backup/daily/data1.tar"] = {
+            "type": "file", "owner": username, "mode": "644", "content": "tar archive"
+        }
+        fs[f"/home/{username}/quiz7/archive/backup/weekly"] = {
             "type": "dir", "owner": username, "mode": "755", "children": []
         }
-        fs[f"/home/{username}/quiz7/archive/vault_data"] = {
+
+        # archive/temp
+        fs[f"/home/{username}/quiz7/archive/temp"] = {
+            "type": "dir", "owner": username, "mode": "755",
+            "children": ["cache", "session_dump"]
+        }
+        fs[f"/home/{username}/quiz7/archive/temp/cache"] = {
+            "type": "dir", "owner": username, "mode": "755", "children": []
+        }
+        fs[f"/home/{username}/quiz7/archive/temp/session_dump"] = {
+            "type": "file", "owner": username, "mode": "644", "content": "empty cache"
+        }
+
+        # archive/logs
+        fs[f"/home/{username}/quiz7/archive/logs"] = {
+            "type": "dir", "owner": username, "mode": "755",
+            "children": ["syslog.1", "vault_data"]
+        }
+        fs[f"/home/{username}/quiz7/archive/logs/syslog.1"] = {
+            "type": "file", "owner": username, "mode": "644", "content": "system logs"
+        }
+        # 3-soxta: archive/logs/vault_data bu ham katalog!
+        fs[f"/home/{username}/quiz7/archive/logs/vault_data"] = {
+            "type": "dir", "owner": username, "mode": "755", "children": []
+        }
+
+        # archive/storage/deep/nested/... -> haqiqiy fayl!
+        fs[f"/home/{username}/quiz7/archive/storage"] = {
+            "type": "dir", "owner": username, "mode": "755",
+            "children": ["zone_a", "zone_b"]
+        }
+        fs[f"/home/{username}/quiz7/archive/storage/zone_a"] = {
+            "type": "dir", "owner": username, "mode": "755",
+            "children": ["cluster1"]
+        }
+        fs[f"/home/{username}/quiz7/archive/storage/zone_a/cluster1"] = {
+            "type": "dir", "owner": username, "mode": "755",
+            "children": ["node_info.txt"]
+        }
+        fs[f"/home/{username}/quiz7/archive/storage/zone_a/cluster1/node_info.txt"] = {
+            "type": "file", "owner": username, "mode": "644", "content": "cluster node"
+        }
+
+        fs[f"/home/{username}/quiz7/archive/storage/zone_b"] = {
+            "type": "dir", "owner": username, "mode": "755",
+            "children": ["secured_core"]
+        }
+        fs[f"/home/{username}/quiz7/archive/storage/zone_b/secured_core"] = {
+            "type": "dir", "owner": username, "mode": "755",
+            "children": ["vault_data"]
+        }
+        # HAQIQIY FAYL!
+        fs[f"/home/{username}/quiz7/archive/storage/zone_b/secured_core/vault_data"] = {
             "type": "file", "owner": username, "mode": "644", "content": k17
         }
 
