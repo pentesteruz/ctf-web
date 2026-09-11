@@ -1878,6 +1878,44 @@ def split_pipeline(cmd_str):
     return [p for p in parts if p]
 
 
+def split_chains(cmd_str):
+    """Splits command by && or ; taking into account quotes."""
+    chains = []
+    current = []
+    in_single = False
+    in_double = False
+    i = 0
+    n = len(cmd_str)
+    while i < n:
+        c = cmd_str[i]
+        if c == "'" and not in_double:
+            in_single = not in_single
+            current.append(c)
+            i += 1
+        elif c == '"' and not in_single:
+            in_double = not in_double
+            current.append(c)
+            i += 1
+        elif not in_single and not in_double:
+            if c == "&" and i + 1 < n and cmd_str[i + 1] == "&":
+                chains.append("".join(current).strip())
+                current = []
+                i += 2
+            elif c == ";":
+                chains.append("".join(current).strip())
+                current = []
+                i += 1
+            else:
+                current.append(c)
+                i += 1
+        else:
+            current.append(c)
+            i += 1
+    if current:
+        chains.append("".join(current).strip())
+    return [c for c in chains if c]
+
+
 @app.route("/api/terminal/execute", methods=["POST"])
 @login_required
 def execute_command():
@@ -2578,56 +2616,63 @@ def execute_command():
         else:
             return f"bash: {cmd}: command not found"
 
-    # ── Pipeline & Redirection Execution ──────────────────────────────
-    # 1. Output redirection (> or >>)
-    cmd_body, redirect_target, redirect_append = extract_redirection(raw_cmd)
+    # ── Command Execution (Chaining &&/;, Pipelines |, Redirection >/<) ──
+    chains = split_chains(raw_cmd)
+    chain_outputs = []
 
-    # 2. Input redirection (<)
-    cmd_body, in_file = extract_input_redirection(cmd_body)
-    stdin_data = None
-    if in_file:
-        in_path = resolve_path(in_file)
-        if in_path in fs and fs[in_path]["type"] == "file":
-            stdin_data = fs[in_path]["content"]
-        else:
-            return jsonify({"output": f"bash: {in_file}: No such file or directory", "cwd": cwd})
+    for one_chain in chains:
+        # 1. Output redirection (> or >>)
+        cmd_body, redirect_target, redirect_append = extract_redirection(one_chain)
 
-    # 3. Pipeline execution (|)
-    pipeline_stages = split_pipeline(cmd_body)
-    curr_input = stdin_data
-    final_output = ""
-
-    for stage_cmd in pipeline_stages:
-        if not stage_cmd:
-            continue
-        stage_res = run_single_command(stage_cmd, stdin_data=curr_input)
-        if isinstance(stage_res, dict):
-            if stage_res.get("action") == "clear":
-                return jsonify({"output": "__CLEAR__", "cwd": cwd})
-            if stage_res.get("action") == "open_editor":
-                return jsonify(stage_res)
-        curr_input = str(stage_res)
-
-    final_output = curr_input if curr_input is not None else ""
-
-    # 4. Save output redirection to VFS
-    if redirect_target:
-        target_path = resolve_path(redirect_target)
-        parent_dir = posixpath.dirname(target_path)
-        if parent_dir in fs and fs[parent_dir]["type"] == "dir":
-            base = posixpath.basename(target_path)
-            if base not in fs[parent_dir]["children"]:
-                fs[parent_dir]["children"].append(base)
-
-            if redirect_append and target_path in fs:
-                prev_c = fs[target_path]["content"]
-                fs[target_path]["content"] = prev_c + ("\n" if prev_c and not prev_c.endswith("\n") else "") + final_output
+        # 2. Input redirection (<)
+        cmd_body, in_file = extract_input_redirection(cmd_body)
+        stdin_data = None
+        if in_file:
+            in_path = resolve_path(in_file)
+            if in_path in fs and fs[in_path]["type"] == "file":
+                stdin_data = fs[in_path]["content"]
             else:
-                fs[target_path] = {"type": "file", "owner": username, "mode": "644", "content": final_output}
-            final_output = ""
-        else:
-            final_output = f"bash: {redirect_target}: No such file or directory"
+                return jsonify({"output": f"bash: {in_file}: No such file or directory", "cwd": cwd})
 
+        # 3. Pipeline execution (|)
+        pipeline_stages = split_pipeline(cmd_body)
+        curr_input = stdin_data
+
+        for stage_cmd in pipeline_stages:
+            if not stage_cmd:
+                continue
+            stage_res = run_single_command(stage_cmd, stdin_data=curr_input)
+            if isinstance(stage_res, dict):
+                if stage_res.get("action") == "clear":
+                    return jsonify({"output": "__CLEAR__", "cwd": cwd})
+                if stage_res.get("action") == "open_editor":
+                    return jsonify(stage_res)
+            curr_input = str(stage_res)
+
+        part_out = curr_input if curr_input is not None else ""
+
+        # 4. Save output redirection to VFS
+        if redirect_target:
+            target_path = resolve_path(redirect_target)
+            parent_dir = posixpath.dirname(target_path)
+            if parent_dir in fs and fs[parent_dir]["type"] == "dir":
+                base = posixpath.basename(target_path)
+                if base not in fs[parent_dir]["children"]:
+                    fs[parent_dir]["children"].append(base)
+
+                if redirect_append and target_path in fs:
+                    prev_c = fs[target_path]["content"]
+                    fs[target_path]["content"] = prev_c + ("\n" if prev_c and not prev_c.endswith("\n") else "") + part_out
+                else:
+                    fs[target_path] = {"type": "file", "owner": username, "mode": "644", "content": part_out}
+                part_out = ""
+            else:
+                part_out = f"bash: {redirect_target}: No such file or directory"
+
+        if part_out:
+            chain_outputs.append(part_out)
+
+    final_output = "\n".join(chain_outputs)
     db.save_user_vfs(username, fs)
     return jsonify({"output": final_output, "cwd": cwd})
 
