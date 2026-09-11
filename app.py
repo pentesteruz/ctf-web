@@ -1774,7 +1774,7 @@ def autocomplete_terminal():
         return posixpath.normpath(p)
 
     cmds = ["ls", "cd", "mkdir", "touch", "nano", "cat", "head", "tail", "rm",
-            "chmod", "chown", "check", "status", "reset", "clear", "help", "whoami", "pwd", "sudo", "find", "grep", "wc", "echo", "ctf1", "ctf2"]
+            "chmod", "chown", "check", "status", "reset", "clear", "help", "whoami", "pwd", "sudo", "find", "grep", "wc", "echo", "ctf1", "ctf2", "sort", "uniq"]
 
     tokens = text.split()
     is_trailing_space = text.endswith(" ")
@@ -1810,6 +1810,74 @@ def autocomplete_terminal():
     return jsonify({"matches": matches})
 
 
+# ── Pipeline & Redirection Parsers ──────────────────────────────────────────
+
+def extract_redirection(cmd_str):
+    """Extracts output redirection (> or >>) taking into account quotes."""
+    in_single = False
+    in_double = False
+    i = len(cmd_str) - 1
+    while i >= 0:
+        c = cmd_str[i]
+        if c == "'" and not in_double:
+            in_single = not in_single
+        elif c == '"' and not in_single:
+            in_double = not in_double
+        elif not in_single and not in_double and c == ">":
+            if i > 0 and cmd_str[i - 1] == ">":
+                base_cmd = cmd_str[:i - 1].strip()
+                target_file = cmd_str[i + 1:].strip()
+                return base_cmd, target_file, True
+            else:
+                base_cmd = cmd_str[:i].strip()
+                target_file = cmd_str[i + 1:].strip()
+                return base_cmd, target_file, False
+        i -= 1
+    return cmd_str, None, False
+
+
+def extract_input_redirection(cmd_str):
+    """Extracts input redirection (<) taking into account quotes."""
+    in_single = False
+    in_double = False
+    i = len(cmd_str) - 1
+    while i >= 0:
+        c = cmd_str[i]
+        if c == "'" and not in_double:
+            in_single = not in_single
+        elif c == '"' and not in_single:
+            in_double = not in_double
+        elif not in_single and not in_double and c == "<":
+            base_cmd = cmd_str[:i].strip()
+            source_file = cmd_str[i + 1:].strip()
+            return base_cmd, source_file
+        i -= 1
+    return cmd_str, None
+
+
+def split_pipeline(cmd_str):
+    """Splits command pipeline by | taking into account quotes."""
+    parts = []
+    current = []
+    in_single = False
+    in_double = False
+    for c in cmd_str:
+        if c == "'" and not in_double:
+            in_single = not in_single
+            current.append(c)
+        elif c == '"' and not in_single:
+            in_double = not in_double
+            current.append(c)
+        elif c == "|" and not in_single and not in_double:
+            parts.append("".join(current).strip())
+            current = []
+        else:
+            current.append(c)
+    if current:
+        parts.append("".join(current).strip())
+    return [p for p in parts if p]
+
+
 @app.route("/api/terminal/execute", methods=["POST"])
 @login_required
 def execute_command():
@@ -1822,7 +1890,6 @@ def execute_command():
         return jsonify({"output": "", "cwd": cwd})
 
     fs = get_fs(username)
-    stage = db.get_student_stage(username)
 
     def resolve_path(p):
         p = p.replace("\\", "/")
@@ -1834,160 +1901,153 @@ def execute_command():
             p = posixpath.join(cwd, p)
         return posixpath.normpath(p)
 
-    output = ""
-    parts = raw_cmd.split()
-    cmd = parts[0]
-    args = parts[1:]
+    def run_single_command(cmd_text, stdin_data=None):
+        nonlocal cwd, fs
+        parts = cmd_text.split()
+        if not parts:
+            return ""
+        cmd = parts[0]
+        args = parts[1:]
 
-    if cmd == "clear":
-        return jsonify({"output": "__CLEAR__", "cwd": cwd})
+        if cmd == "clear":
+            return {"action": "clear"}
 
-    elif cmd in ("ctf1", "ctf2"):
-        target_ctf = 1 if cmd == "ctf1" else 2
-        res = db.switch_active_ctf(username, target_ctf)
-        if not res["ok"]:
-            output = res["error"]
-        else:
+        elif cmd in ("ctf1", "ctf2"):
+            target_ctf = 1 if cmd == "ctf1" else 2
+            res = db.switch_active_ctf(username, target_ctf)
+            if not res["ok"]:
+                return res["error"]
             sync_fs(username)
             cwd = f"/home/{username}"
             label = "CTF 1 (Linux Asoslari)" if target_ctf == 1 else "CTF 2 (Ilg'or Kiberxavfsizlik)"
-            output = f"🔄 {label} moduliga muvaffaqiyatli o'tildi!\n💡 Boshlash: cd ~/quiz1 && cat README.txt"
+            return f"🔄 {label} moduliga muvaffaqiyatli o'tildi!\n💡 Boshlash: cd ~/quiz1 && cat README.txt"
 
-    elif cmd == "reset":
-        sync_fs(username)
-        output = "🔄 Joriy bosqich fayllari va tizim yangilandi (tozalandi)!"
+        elif cmd == "reset":
+            sync_fs(username)
+            return "🔄 Joriy bosqich fayllari va tizim yangilandi (tozalandi)!"
 
-    elif cmd == "pwd":
-        output = cwd
+        elif cmd == "pwd":
+            return cwd
 
-    elif cmd == "whoami":
-        output = username
+        elif cmd == "whoami":
+            return username
 
-    elif cmd == "help":
-        output = (
-            "📌 Mavjud buyruqlar:\n"
-            "  ls [-la]                    - papkadagi fayllarni ko'rsatadi\n"
-            "  cd <path>                   - katalogga o'tadi\n"
-            "  mkdir <dir>                 - papka yaratadi\n"
-            "  touch <file>                - fayl hosil qiladi\n"
-            "  nano <file>                 - faylni tahrirlash (Web UI editor)\n"
-            "  cat <file>                  - fayl ichini o'qiydi\n"
-            "  head [-n K] <file>          - fayl boshidan K ta qator\n"
-            "  tail [-n K] <file>          - fayl oxiridan K ta qator\n"
-            "  grep [-w -i -v -n] <p> <f>  - fayldan qidiruv (-w so'z, -i registr, -v inkor, -n qator raqami)\n"
-            "  find <dir> [options]        - qidiruv (-name nom, -size hajmi, -perm huquqi, -type f/d)\n"
-            "  wc [-l -w -c] <file>        - qatorlar (-l), so'zlar (-w) va baytlar (-c) sonini sanash\n"
-            "  rm [-r] <path>              - fayl yoki papkani o'chiradi\n"
-            "  chmod <+x/+r/mode> <file>   - fayl yoki papka ruxsatini o'zgartiradi\n"
-            "  sudo chown <u> <file>       - fayl egaligini o'zgartiradi\n"
-            "  echo <text> > <file>        - faylga matn yozadi\n"
-            "  check                       - bosqichni tekshirish\n"
-            "  status                      - joriy bosqich ma'lumotlari\n"
-            "  reset                       - joriy bosqich fayllarini yangilash / tozalash\n"
-            "  ctf1 / ctf2                 - CTF 1 yoki CTF 2 moduliga o'tish\n"
-            "  clear                       - ekranni tozalash"
-        )
+        elif cmd == "help":
+            return (
+                "📌 Mavjud buyruqlar:\n"
+                "  ls [-la]                    - papkadagi fayllarni ko'rsatadi\n"
+                "  cd <path>                   - katalogga o'tadi\n"
+                "  mkdir <dir>                 - papka yaratadi\n"
+                "  touch <file>                - fayl hosil qiladi\n"
+                "  nano <file>                 - faylni tahrirlash (Web UI editor)\n"
+                "  cat [file]                  - fayl ichini o'qiydi (yoki stdin)\n"
+                "  head [-n K] [file]          - fayl boshidan K ta qator\n"
+                "  tail [-n K] [file]          - fayl oxiridan K ta qator\n"
+                "  grep [-w -i -v -n -c] <p>   - matn/fayldan qidiruv\n"
+                "  wc [-l -w -c] [file]        - qatorlar (-l), so'zlar (-w), baytlar (-c) sonini sanash\n"
+                "  find <dir> [options]        - qidiruv (-name, -size, -perm, -type)\n"
+                "  sort [-r -n -u] [file]      - qatorlarni saralash\n"
+                "  uniq [-c] [file]            - takroriy qatorlarni tozalash\n"
+                "  rm [-r] <path>              - fayl yoki papkani o'chiradi\n"
+                "  chmod <mode> <file>         - fayl ruxsatini o'zgartiradi\n"
+                "  sudo chown <u> <file>       - fayl egaligini o'zgartiradi\n"
+                "  cmd1 | cmd2                 - konveyer (pipe) orqali natijani uzatish\n"
+                "  cmd > file (yoki >>)        - natijani faylga yozish/qo'shish\n"
+                "  check                       - bosqichni tekshirish\n"
+                "  status                      - joriy bosqich ma'lumotlari\n"
+                "  reset                       - joriy bosqich fayllarini yangilash / tozalash\n"
+                "  ctf1 / ctf2                 - CTF 1 yoki CTF 2 moduliga o'tish\n"
+                "  clear                       - ekranni tozalash"
+            )
 
-    elif cmd == "status":
-        ctf_status = db.get_student_ctf_status(username)
-        active_ctf = ctf_status["active_ctf"]
-        stage = ctf_status["ctf2_stage"] if active_ctf == 2 else ctf_status["ctf1_stage"]
-        ctf_name = "CTF 1: Linux Asoslari" if active_ctf == 1 else "CTF 2: Ilg'or Tizim & Kiberxavfsizlik"
-        quiz_dict = QUIZZES_CTF2 if active_ctf == 2 else QUIZZES_CTF1
-        quiz_info = quiz_dict.get(stage, {
-            "title": "Tugallangan",
-            "description": "Barcha 10 ta bosqich muvaffaqiyatli topshirildi!",
-            "guide": ""
-        })
-        fail_cnt = db.get_stage_fail_count(username, stage, ctf=active_ctf)
-        stage_str = f"quiz{stage}/10" if stage <= 10 else "Tugallandi! 🏆"
-        output = (
-            f"👤 Foydalanuvchi: {username}\n"
-            f"🛡️ Modul: {ctf_name}\n"
-            f"🏆 Joriy bosqich: {stage_str}\n"
-            f"🎯 Mavzu: {quiz_info.get('title', 'Tugallangan')}\n"
-            f"⚠️ Noto'g'ri urinishlar: {fail_cnt}\n"
-            f"💡 Tavsif: {quiz_info.get('description', '')}\n"
-            f"📋 Ko'rish: {quiz_info.get('guide', '')}"
-        )
+        elif cmd == "status":
+            ctf_status = db.get_student_ctf_status(username)
+            active_ctf = ctf_status["active_ctf"]
+            stage = ctf_status["ctf2_stage"] if active_ctf == 2 else ctf_status["ctf1_stage"]
+            ctf_name = "CTF 1: Linux Asoslari" if active_ctf == 1 else "CTF 2: Ilg'or Tizim & Kiberxavfsizlik"
+            quiz_dict = QUIZZES_CTF2 if active_ctf == 2 else QUIZZES_CTF1
+            quiz_info = quiz_dict.get(stage, {
+                "title": "Tugallangan",
+                "description": "Barcha 10 ta bosqich muvaffaqiyatli topshirildi!",
+                "guide": ""
+            })
+            fail_cnt = db.get_stage_fail_count(username, stage, ctf=active_ctf)
+            stage_str = f"quiz{stage}/10" if stage <= 10 else "Tugallandi! 🏆"
+            return (
+                f"👤 Foydalanuvchi: {username}\n"
+                f"🛡️ Modul: {ctf_name}\n"
+                f"🏆 Joriy bosqich: {stage_str}\n"
+                f"🎯 Mavzu: {quiz_info.get('title', 'Tugallangan')}\n"
+                f"⚠️ Noto'g'ri urinishlar: {fail_cnt}\n"
+                f"💡 Tavsif: {quiz_info.get('description', '')}\n"
+                f"📋 Ko'rish: {quiz_info.get('guide', '')}"
+            )
 
-    elif cmd == "check":
-        res = check_quiz()
-        res_data = res.get_json()
-        output = res_data["message"]
+        elif cmd == "check":
+            res = check_quiz()
+            res_data = res.get_json()
+            return res_data["message"]
 
-    elif cmd == "cd":
-        target = args[0] if args else f"/home/{username}"
-        resolved = resolve_path(target)
-        if resolved in fs and fs[resolved]["type"] == "dir":
-            mode = fs[resolved].get("mode", "755")
-            has_exec = ("x" in mode or mode in ("755", "777", "775", "111", "555"))
-            if not has_exec and mode in ("000", "200", "400", "600", "644"):
-                output = f"bash: cd: {target}: Permission denied"
-            else:
-                cwd = resolved
-                output = ""
-        else:
-            output = f"bash: cd: {target}: No such file or directory"
-
-    elif cmd == "ls":
-        show_all = False
-        long_format = False
-        target_dir = cwd
-        for a in args:
-            if a.startswith("-"):
-                if "a" in a:
-                    show_all = True
-                if "l" in a:
-                    long_format = True
-            else:
-                target_dir = resolve_path(a)
-
-        if target_dir in fs and fs[target_dir]["type"] == "dir":
-            items = fs[target_dir]["children"]
-            result_items = []
-            for item in items:
-                if not show_all and item.startswith("."):
-                    continue
-                item_path = posixpath.normpath(posixpath.join(target_dir, item))
-                item_meta = fs.get(item_path, {})
-                itype = item_meta.get("type", "file")
-                iowner = item_meta.get("owner", username)
-                imode = item_meta.get("mode", "644")
-                if long_format:
-                    prefix = "d" if itype == "dir" else "-"
-                    # Convert mode to real rwx representation
-                    if imode == "000":
-                        perm = "---------"
-                    elif imode in ("200", "-r"):
-                        perm = "-w-------"
-                    elif imode == "400":
-                        perm = "r--------"
-                    elif imode in ("600", "rw"):
-                        perm = "rw-------"
-                    elif imode in ("644", "r", "+r", "u+r"):
-                        perm = "rw-r--r--"
-                    elif imode in ("755", "x", "+x", "u+x", "+rx", "u+xr", "u+rx"):
-                        perm = "rwxr-xr-x"
-                    elif imode == "777":
-                        perm = "rwxrwxrwx"
-                    else:
-                        perm = "rwxr-xr-x" if itype == "dir" or "x" in imode else "rw-r--r--"
-
-                    fcontent = item_meta.get("content", "")
-                    sz = 4096 if itype == "dir" else len(fcontent.encode("utf-8"))
-                    result_items.append(f"{prefix}{perm} 1 {iowner} {iowner} {sz:5d} Sep  9 {item}")
+        elif cmd == "cd":
+            target = args[0] if args else f"/home/{username}"
+            resolved = resolve_path(target)
+            if resolved in fs and fs[resolved]["type"] == "dir":
+                mode = fs[resolved].get("mode", "755")
+                has_exec = ("x" in mode or mode in ("755", "777", "775", "111", "555"))
+                if not has_exec and mode in ("000", "200", "400", "600", "644"):
+                    return f"bash: cd: {target}: Permission denied"
                 else:
-                    prefix = "📁 " if itype == "dir" else "📄 "
-                    result_items.append(f"{prefix}{item}")
-            output = "\n".join(result_items) if result_items else ""
-        else:
-            output = f"ls: cannot access '{target_dir}': No such file or directory"
+                    cwd = resolved
+                    return ""
+            else:
+                return f"bash: cd: {target}: No such file or directory"
 
-    elif cmd == "mkdir":
-        if not args:
-            output = "mkdir: missing operand"
-        else:
+        elif cmd == "ls":
+            show_all = False
+            long_format = False
+            target_dir = cwd
+            for a in args:
+                if a.startswith("-"):
+                    if "a" in a: show_all = True
+                    if "l" in a: long_format = True
+                else:
+                    target_dir = resolve_path(a)
+
+            if target_dir in fs and fs[target_dir]["type"] == "dir":
+                items = fs[target_dir]["children"]
+                result_items = []
+                for item in items:
+                    if not show_all and item.startswith("."):
+                        continue
+                    item_path = posixpath.normpath(posixpath.join(target_dir, item))
+                    item_meta = fs.get(item_path, {})
+                    itype = item_meta.get("type", "file")
+                    iowner = item_meta.get("owner", username)
+                    imode = item_meta.get("mode", "644")
+                    if long_format:
+                        prefix = "d" if itype == "dir" else "-"
+                        if imode == "000": perm = "---------"
+                        elif imode in ("200", "-r"): perm = "-w-------"
+                        elif imode == "400": perm = "r--------"
+                        elif imode in ("600", "rw"): perm = "rw-------"
+                        elif imode in ("644", "r", "+r", "u+r"): perm = "rw-r--r--"
+                        elif imode in ("755", "x", "+x", "u+x", "+rx", "u+xr", "u+rx"): perm = "rwxr-xr-x"
+                        elif imode == "777": perm = "rwxrwxrwx"
+                        else: perm = "rwxr-xr-x" if itype == "dir" or "x" in imode else "rw-r--r--"
+
+                        fcontent = item_meta.get("content", "")
+                        sz = 4096 if itype == "dir" else len(fcontent.encode("utf-8"))
+                        result_items.append(f"{prefix}{perm} 1 {iowner} {iowner} {sz:5d} Sep  9 {item}")
+                    else:
+                        prefix = "📁 " if itype == "dir" else "📄 "
+                        result_items.append(f"{prefix}{item}")
+                return "\n".join(result_items) if result_items else ""
+            else:
+                return f"ls: cannot access '{target_dir}': No such file or directory"
+
+        elif cmd == "mkdir":
+            if not args:
+                return "mkdir: missing operand"
             msgs = []
             for dirname in args:
                 target_path = resolve_path(dirname)
@@ -1999,12 +2059,11 @@ def execute_command():
                     fs[target_path] = {"type": "dir", "owner": username, "mode": "755", "children": []}
                 else:
                     msgs.append(f"mkdir: cannot create directory '{dirname}': No such file or directory")
-            output = "\n".join(msgs)
+            return "\n".join(msgs)
 
-    elif cmd == "touch":
-        if not args:
-            output = "touch: missing file operand"
-        else:
+        elif cmd == "touch":
+            if not args:
+                return "touch: missing file operand"
             msgs = []
             for fname in args:
                 target_path = resolve_path(fname)
@@ -2017,58 +2076,70 @@ def execute_command():
                         fs[target_path] = {"type": "file", "owner": username, "mode": "644", "content": ""}
                 else:
                     msgs.append(f"touch: cannot touch '{fname}': No such file or directory")
-            output = "\n".join(msgs)
+            return "\n".join(msgs)
 
-    elif cmd == "cat":
-        if not args:
-            output = "cat: missing operand"
-        else:
-            target_path = resolve_path(args[0])
-            if target_path in fs:
-                if fs[target_path]["type"] == "dir":
-                    output = f"cat: {args[0]}: Is a directory"
-                else:
-                    mode = fs[target_path].get("mode", "644")
-                    has_read = ("r" in mode or mode in ("644", "755", "777", "444", "666", "700", "600", "400", "775"))
-                    if not has_read and mode in ("000", "200", "300", "100", "x"):
-                        output = f"cat: {args[0]}: Permission denied"
+        elif cmd == "cat":
+            if not args:
+                return stdin_data if stdin_data is not None else "cat: missing operand"
+            out_parts = []
+            for arg_file in args:
+                target_path = resolve_path(arg_file)
+                if target_path in fs:
+                    if fs[target_path]["type"] == "dir":
+                        out_parts.append(f"cat: {arg_file}: Is a directory")
                     else:
-                        output = fs[target_path]["content"]
-            else:
-                output = f"cat: {args[0]}: No such file or directory"
-
-    elif cmd in ("head", "tail"):
-        target_file = None
-        count = 10
-        idx = 0
-        while idx < len(args):
-            if args[idx] == "-n" and idx + 1 < len(args):
-                try:
-                    count = int(args[idx + 1])
-                except ValueError:
-                    pass
-                idx += 2
-            else:
-                target_file = args[idx]
-                idx += 1
-        if not target_file:
-            output = f"{cmd}: missing file operand"
-        else:
-            target_path = resolve_path(target_file)
-            if target_path in fs and fs[target_path]["type"] == "file":
-                lines = fs[target_path]["content"].splitlines()
-                if cmd == "head":
-                    output = "\n".join(lines[:count])
+                        mode = fs[target_path].get("mode", "644")
+                        has_read = ("r" in mode or mode in ("644", "755", "777", "444", "666", "700", "600", "400", "775"))
+                        if not has_read and mode in ("000", "200", "300", "100", "x"):
+                            out_parts.append(f"cat: {arg_file}: Permission denied")
+                        else:
+                            out_parts.append(fs[target_path]["content"])
                 else:
-                    output = "\n".join(lines[-count:])
-            else:
-                output = f"{cmd}: {target_file}: No such file or directory"
+                    hint = ""
+                    for k in fs:
+                        if posixpath.basename(k) == arg_file and fs[k]["type"] == "file":
+                            parent = posixpath.dirname(k).replace(f"/home/{username}", "~")
+                            hint = f" (💡 Maslahat: Fayl '{parent}' ichida joylashgan. Avval 'cd {parent}' qiling)"
+                            break
+                    out_parts.append(f"cat: {arg_file}: No such file or directory{hint}")
+            return "\n".join(out_parts)
 
-    elif cmd == "grep":
-        if len(args) < 1:
-            output = "grep: usage: grep [options] <pattern> <file>"
-        else:
-            import re
+        elif cmd in ("head", "tail"):
+            target_file = None
+            count = 10
+            idx = 0
+            while idx < len(args):
+                if args[idx] == "-n" and idx + 1 < len(args):
+                    try: count = int(args[idx + 1])
+                    except ValueError: pass
+                    idx += 2
+                elif args[idx].startswith("-") and args[idx][1:].isdigit():
+                    count = int(args[idx][1:])
+                    idx += 1
+                else:
+                    target_file = args[idx]
+                    idx += 1
+
+            lines = []
+            if target_file:
+                target_path = resolve_path(target_file)
+                if target_path in fs and fs[target_path]["type"] == "file":
+                    lines = fs[target_path]["content"].splitlines()
+                elif target_path in fs and fs[target_path]["type"] == "dir":
+                    return f"{cmd}: error reading '{target_file}': Is a directory"
+                else:
+                    return f"{cmd}: {target_file}: No such file or directory"
+            elif stdin_data is not None:
+                lines = stdin_data.splitlines()
+            else:
+                return f"{cmd}: missing file operand"
+
+            if cmd == "head":
+                return "\n".join(lines[:count])
+            else:
+                return "\n".join(lines[-count:] if count > 0 else [])
+
+        elif cmd == "grep":
             word_match = False
             ignore_case = False
             invert_match = False
@@ -2083,345 +2154,482 @@ def execute_command():
                     if "v" in a: invert_match = True
                     if "n" in a: line_numbers = True
                     if "c" in a: count_only = True
-                elif a == "--word-regexp":
-                    word_match = True
-                elif a == "--ignore-case":
-                    ignore_case = True
-                elif a == "--invert-match":
-                    invert_match = True
-                elif a == "--line-number":
-                    line_numbers = True
+                elif a == "--word-regexp": word_match = True
+                elif a == "--ignore-case": ignore_case = True
+                elif a == "--invert-match": invert_match = True
+                elif a == "--line-number": line_numbers = True
+                elif a == "--count": count_only = True
                 else:
                     non_flag_args.append(a)
 
-            if len(non_flag_args) < 2:
-                output = "grep: missing pattern or file operand"
-            else:
-                pattern = non_flag_args[0].strip("'\"")
+            if not non_flag_args:
+                return "grep: missing pattern"
+
+            pattern = non_flag_args[0].strip("'\"")
+            lines_to_search = []
+
+            if len(non_flag_args) >= 2:
                 target_file = non_flag_args[-1]
                 target_path = resolve_path(target_file)
                 if target_path in fs and fs[target_path]["type"] == "file":
-                    lines = fs[target_path]["content"].splitlines()
-                    matched = []
-                    flags = re.IGNORECASE if ignore_case else 0
-                    regex_pat = r'\b' + re.escape(pattern) + r'\b' if word_match else re.escape(pattern)
-
-                    for idx, line in enumerate(lines, 1):
-                        has_match = bool(re.search(regex_pat, line, flags))
-                        if invert_match:
-                            has_match = not has_match
-                        if has_match:
-                            if line_numbers:
-                                matched.append(f"{idx}:{line}")
-                            else:
-                                matched.append(line)
-                    if count_only:
-                        output = str(len(matched))
-                    else:
-                        output = "\n".join(matched) if matched else ""
+                    lines_to_search = fs[target_path]["content"].splitlines()
+                elif target_path in fs and fs[target_path]["type"] == "dir":
+                    return f"grep: {target_file}: Is a directory"
                 else:
-                    output = f"grep: {target_file}: No such file or directory"
+                    hint = ""
+                    for k in fs:
+                        if posixpath.basename(k) == target_file and fs[k]["type"] == "file":
+                            parent = posixpath.dirname(k).replace(f"/home/{username}", "~")
+                            hint = f" (💡 Maslahat: Fayl '{parent}' ichida joylashgan. Avval 'cd {parent}' qiling)"
+                            break
+                    return f"grep: {target_file}: No such file or directory{hint}"
+            elif stdin_data is not None:
+                lines_to_search = stdin_data.splitlines()
+            else:
+                return "grep: missing file operand"
 
-    elif cmd == "wc":
-        if not args:
-            output = "wc: missing file operand"
-        else:
+            import re
+            matched = []
+            flags = re.IGNORECASE if ignore_case else 0
+            regex_pat = r'\b' + re.escape(pattern) + r'\b' if word_match else re.escape(pattern)
+
+            for idx_l, line in enumerate(lines_to_search, 1):
+                has_match = bool(re.search(regex_pat, line, flags))
+                if invert_match:
+                    has_match = not has_match
+                if has_match:
+                    if line_numbers:
+                        matched.append(f"{idx_l}:{line}")
+                    else:
+                        matched.append(line)
+
+            if count_only:
+                return str(len(matched))
+            return "\n".join(matched) if matched else ""
+
+        elif cmd == "wc":
             lines_flag = False
             words_flag = False
             bytes_flag = False
+            chars_flag = False
+            max_line_flag = False
             target_files = []
+
             for a in args:
-                if a.startswith("-") and len(a) > 1:
+                if a.startswith("--"):
+                    if a == "--lines": lines_flag = True
+                    elif a == "--words": words_flag = True
+                    elif a == "--bytes": bytes_flag = True
+                    elif a == "--chars": chars_flag = True
+                    elif a == "--max-line-length": max_line_flag = True
+                elif a.startswith("-") and len(a) > 1:
                     if "l" in a: lines_flag = True
                     if "w" in a: words_flag = True
                     if "c" in a: bytes_flag = True
+                    if "m" in a: chars_flag = True
+                    if "L" in a: max_line_flag = True
                 else:
                     target_files.append(a)
 
-            if not target_files:
-                output = "wc: missing file operand"
-            else:
-                out_lines = []
-                for tf in target_files:
-                    target_path = resolve_path(tf)
-                    if target_path in fs and fs[target_path]["type"] == "file":
-                        cnt = fs[target_path]["content"]
-                        l_count = len(cnt.splitlines()) if cnt else 0
-                        w_count = len(cnt.split()) if cnt else 0
-                        b_count = len(cnt.encode("utf-8")) if cnt else 0
+            default_all = not (lines_flag or words_flag or bytes_flag or chars_flag or max_line_flag)
 
-                        parts_wc = []
-                        if lines_flag or (not words_flag and not bytes_flag):
-                            parts_wc.append(str(l_count))
-                        if words_flag:
-                            parts_wc.append(str(w_count))
-                        if bytes_flag:
-                            parts_wc.append(str(b_count))
-                        parts_wc.append(tf)
-                        out_lines.append(" ".join(parts_wc))
-                    else:
-                        out_lines.append(f"wc: {tf}: No such file or directory")
-                output = "\n".join(out_lines)
-
-    elif cmd == "find":
-        search_dir = cwd
-        name_pattern = None
-        size_filter = None
-        perm_filter = None
-        type_filter = None
-        empty_filter = False
-
-        idx = 0
-        while idx < len(args):
-            arg = args[idx]
-            if arg == "-name" and idx + 1 < len(args):
-                name_pattern = args[idx + 1].strip("'\"*")
-                idx += 2
-            elif arg == "-size" and idx + 1 < len(args):
-                size_filter = args[idx + 1].strip()
-                idx += 2
-            elif arg == "-perm" and idx + 1 < len(args):
-                perm_filter = args[idx + 1].strip()
-                idx += 2
-            elif arg == "-type" and idx + 1 < len(args):
-                type_filter = args[idx + 1].strip()
-                idx += 2
-            elif arg == "-empty":
-                empty_filter = True
-                idx += 1
-            elif not arg.startswith("-"):
-                search_dir = resolve_path(arg)
-                idx += 1
-            else:
-                idx += 1
-
-        results = []
-        for path_key, item_meta in fs.items():
-            if path_key == search_dir:
-                continue
-            if path_key.startswith(search_dir + "/") or (search_dir == "/" and path_key.startswith("/")):
-                basename = posixpath.basename(path_key)
-                itype = item_meta.get("type", "file")
-                imode = item_meta.get("mode", "644")
-                content = item_meta.get("content", "")
-                byte_size = len(content.encode("utf-8")) if itype == "file" else 4096
-
-                # Name check
-                if name_pattern and name_pattern not in basename:
-                    continue
-                # Type check ('f' or 'd')
-                if type_filter:
-                    if type_filter == "f" and itype != "file":
-                        continue
-                    if type_filter == "d" and itype != "dir":
-                        continue
-                # Perm check
-                if perm_filter:
-                    if perm_filter not in imode:
-                        continue
-                # Empty check
-                if empty_filter:
-                    if itype == "file" and len(content) > 0:
-                        continue
-                # Size check
-                if size_filter:
-                    sz_str = size_filter.strip().lower()
-                    mode_sign = None
-                    if sz_str.startswith("+"):
-                        mode_sign = "+"
-                        sz_str = sz_str[1:]
-                    elif sz_str.startswith("-"):
-                        mode_sign = "-"
-                        sz_str = sz_str[1:]
-
-                    # Unit parsing: 'c' (bytes), 'b' (512b blocks or bytes in beginner usage), 'k' (kb), 'm' (mb)
-                    multiplier = 1
-                    if sz_str.endswith("c"):
-                        multiplier = 1
-                        num_part = sz_str[:-1]
-                    elif sz_str.endswith("k"):
-                        multiplier = 1024
-                        num_part = sz_str[:-1]
-                    elif sz_str.endswith("m"):
-                        multiplier = 1024 * 1024
-                        num_part = sz_str[:-1]
-                    elif sz_str.endswith("b"):
-                        multiplier = 1  # in practice beginners expect 1024b = 1024 bytes
-                        num_part = sz_str[:-1]
-                    else:
-                        num_part = sz_str
-
-                    try:
-                        target_bytes = int(num_part) * multiplier
-                        if mode_sign == "+":
-                            if byte_size <= target_bytes:
-                                continue
-                        elif mode_sign == "-":
-                            if byte_size >= target_bytes:
-                                continue
-                        else:
-                            if byte_size != target_bytes:
-                                continue
-                    except ValueError:
-                        pass
-
-                rel = path_key.replace(f"/home/{username}", "~")
-                results.append(rel)
-
-        output = "\n".join(sorted(results)) if results else ""
-
-    elif cmd == "rm":
-        recursive = False
-        files_to_remove = []
-        for a in args:
-            if a in ["-r", "-rf", "-f", "-fr"]:
-                recursive = True
-            elif a.startswith("-") and "r" in a:
-                recursive = True
-            else:
-                files_to_remove.append(a)
-
-        msgs = []
-        for fname in files_to_remove:
-            target_path = resolve_path(fname)
-            if target_path in fs:
-                if fs[target_path]["type"] == "dir" and not recursive:
-                    msgs.append(f"rm: cannot remove '{fname}': Is a directory")
+            def calc_wc_stats(text):
+                if not text:
+                    l_cnt = 0
+                    w_cnt = 0
+                    b_cnt = 0
+                    c_cnt = 0
+                    max_l = 0
                 else:
-                    # Remove recursively from fs dict
-                    keys_to_del = [k for k in fs if k == target_path or k.startswith(target_path + "/")]
-                    for k in keys_to_del:
-                        del fs[k]
-                    parent_dir = posixpath.dirname(target_path)
-                    base = posixpath.basename(target_path)
-                    if parent_dir in fs and base in fs[parent_dir]["children"]:
-                        fs[parent_dir]["children"].remove(base)
-            else:
-                msgs.append(f"rm: cannot remove '{fname}': No such file or directory")
-        output = "\n".join(msgs)
+                    lines = text.splitlines()
+                    l_cnt = len(lines)
+                    w_cnt = len(text.split())
+                    b_cnt = len(text.encode("utf-8"))
+                    c_cnt = len(text)
+                    max_l = max([len(l) for l in lines]) if lines else 0
 
-    elif cmd == "chmod":
-        if len(args) < 2:
-            output = "chmod: usage: chmod <mode> <file>"
-        else:
+                res_p = []
+                if lines_flag or default_all: res_p.append(str(l_cnt))
+                if words_flag or default_all: res_p.append(str(w_cnt))
+                if bytes_flag or default_all: res_p.append(str(b_cnt))
+                if chars_flag: res_p.append(str(c_cnt))
+                if max_line_flag: res_p.append(str(max_l))
+                return res_p
+
+            # Case A: Piped data into wc (e.g. cat file | wc -l or wc -l < file)
+            if stdin_data is not None and not target_files:
+                stats = calc_wc_stats(stdin_data)
+                return " ".join(stats)
+
+            # Case B: No files and no stdin
+            if not target_files:
+                return "wc: standart kiritish (stdin) bo'sh. Foydalanish: 'wc -l <fayl>' yoki 'cat <fayl> | wc -l'"
+
+            # Case C: File arguments
+            expanded = []
+            for tf in target_files:
+                if tf == "*":
+                    for k, meta in fs.items():
+                        if posixpath.dirname(k) == cwd and meta.get("type") == "file":
+                            expanded.append(posixpath.basename(k))
+                else:
+                    expanded.append(tf)
+
+            out_lines = []
+            tot_l, tot_w, tot_b = 0, 0, 0
+            for tf in expanded:
+                target_path = resolve_path(tf)
+                if target_path in fs and fs[target_path]["type"] == "file":
+                    cnt = fs[target_path]["content"]
+                    stats = calc_wc_stats(cnt)
+                    stats.append(tf)
+                    out_lines.append(" ".join(stats))
+                    tot_l += len(cnt.splitlines()) if cnt else 0
+                    tot_w += len(cnt.split()) if cnt else 0
+                    tot_b += len(cnt.encode("utf-8")) if cnt else 0
+                elif target_path in fs and fs[target_path]["type"] == "dir":
+                    out_lines.append(f"wc: {tf}: Is a directory")
+                else:
+                    hint = ""
+                    for k in fs:
+                        if posixpath.basename(k) == tf and fs[k]["type"] == "file":
+                            parent = posixpath.dirname(k).replace(f"/home/{username}", "~")
+                            hint = f" (💡 Maslahat: Fayl '{parent}' ichida. Avval 'cd {parent}' qiling)"
+                            break
+                    out_lines.append(f"wc: {tf}: No such file or directory{hint}")
+
+            if len(expanded) > 1:
+                tot_p = []
+                if lines_flag or default_all: tot_p.append(str(tot_l))
+                if words_flag or default_all: tot_p.append(str(tot_w))
+                if bytes_flag or default_all: tot_p.append(str(tot_b))
+                tot_p.append("total")
+                out_lines.append(" ".join(tot_p))
+            return "\n".join(out_lines)
+
+        elif cmd == "sort":
+            reverse = "-r" in args
+            numeric = "-n" in args
+            unique = "-u" in args
+            files = [a for a in args if not a.startswith("-")]
+
+            lines = []
+            if files:
+                target_path = resolve_path(files[0])
+                if target_path in fs and fs[target_path]["type"] == "file":
+                    lines = fs[target_path]["content"].splitlines()
+                else:
+                    return f"sort: {files[0]}: No such file or directory"
+            elif stdin_data is not None:
+                lines = stdin_data.splitlines()
+            else:
+                return ""
+
+            if numeric:
+                def num_key(val):
+                    try: return float(val.split()[0])
+                    except Exception: return 0
+                lines = sorted(lines, key=num_key, reverse=reverse)
+            else:
+                lines = sorted(lines, reverse=reverse)
+
+            if unique:
+                seen = set()
+                dedup = []
+                for l in lines:
+                    if l not in seen:
+                        seen.add(l)
+                        dedup.append(l)
+                lines = dedup
+            return "\n".join(lines)
+
+        elif cmd == "uniq":
+            count_flag = "-c" in args
+            files = [a for a in args if not a.startswith("-")]
+            lines = []
+            if files:
+                target_path = resolve_path(files[0])
+                if target_path in fs and fs[target_path]["type"] == "file":
+                    lines = fs[target_path]["content"].splitlines()
+                else:
+                    return f"uniq: {files[0]}: No such file or directory"
+            elif stdin_data is not None:
+                lines = stdin_data.splitlines()
+            else:
+                return ""
+
+            result = []
+            prev = None
+            cnt = 0
+            for l in lines:
+                if l == prev:
+                    cnt += 1
+                else:
+                    if prev is not None:
+                        if count_flag: result.append(f"{cnt:4d} {prev}")
+                        else: result.append(prev)
+                    prev = l
+                    cnt = 1
+            if prev is not None:
+                if count_flag: result.append(f"{cnt:4d} {prev}")
+                else: result.append(prev)
+            return "\n".join(result)
+
+        elif cmd == "find":
+            search_dir = cwd
+            name_pattern = None
+            size_filter = None
+            perm_filter = None
+            type_filter = None
+            empty_filter = False
+
+            idx = 0
+            while idx < len(args):
+                arg = args[idx]
+                if arg == "-name" and idx + 1 < len(args):
+                    name_pattern = args[idx + 1].strip("'\"*")
+                    idx += 2
+                elif arg == "-size" and idx + 1 < len(args):
+                    size_filter = args[idx + 1].strip()
+                    idx += 2
+                elif arg == "-perm" and idx + 1 < len(args):
+                    perm_filter = args[idx + 1].strip()
+                    idx += 2
+                elif arg == "-type" and idx + 1 < len(args):
+                    type_filter = args[idx + 1].strip()
+                    idx += 2
+                elif arg == "-empty":
+                    empty_filter = True
+                    idx += 1
+                elif not arg.startswith("-"):
+                    search_dir = resolve_path(arg)
+                    idx += 1
+                else:
+                    idx += 1
+
+            results = []
+            for path_key, item_meta in fs.items():
+                if path_key == search_dir:
+                    continue
+                if path_key.startswith(search_dir + "/") or (search_dir == "/" and path_key.startswith("/")):
+                    basename = posixpath.basename(path_key)
+                    itype = item_meta.get("type", "file")
+                    imode = item_meta.get("mode", "644")
+                    content = item_meta.get("content", "")
+                    byte_size = len(content.encode("utf-8")) if itype == "file" else 4096
+
+                    if name_pattern and name_pattern not in basename:
+                        continue
+                    if type_filter:
+                        if type_filter == "f" and itype != "file": continue
+                        if type_filter == "d" and itype != "dir": continue
+                    if perm_filter:
+                        if perm_filter not in imode: continue
+                    if empty_filter:
+                        if itype == "file" and len(content) > 0: continue
+                    if size_filter:
+                        sz_str = size_filter.strip().lower()
+                        mode_sign = None
+                        if sz_str.startswith("+"): mode_sign = "+"; sz_str = sz_str[1:]
+                        elif sz_str.startswith("-"): mode_sign = "-"; sz_str = sz_str[1:]
+
+                        multiplier = 1
+                        if sz_str.endswith("c"): multiplier = 1; num_part = sz_str[:-1]
+                        elif sz_str.endswith("k"): multiplier = 1024; num_part = sz_str[:-1]
+                        elif sz_str.endswith("m"): multiplier = 1024 * 1024; num_part = sz_str[:-1]
+                        elif sz_str.endswith("b"): multiplier = 1; num_part = sz_str[:-1]
+                        else: num_part = sz_str
+
+                        try:
+                            target_bytes = int(num_part) * multiplier
+                            if mode_sign == "+" and byte_size <= target_bytes: continue
+                            elif mode_sign == "-" and byte_size >= target_bytes: continue
+                            elif mode_sign is None and byte_size != target_bytes: continue
+                        except ValueError:
+                            pass
+
+                    rel = path_key.replace(f"/home/{username}", "~")
+                    results.append(rel)
+            return "\n".join(sorted(results)) if results else ""
+
+        elif cmd == "rm":
+            recursive = False
+            files_to_remove = []
+            for a in args:
+                if a in ["-r", "-rf", "-f", "-fr"] or (a.startswith("-") and "r" in a):
+                    recursive = True
+                else:
+                    files_to_remove.append(a)
+
+            msgs = []
+            for fname in files_to_remove:
+                target_path = resolve_path(fname)
+                if target_path in fs:
+                    if fs[target_path]["type"] == "dir" and not recursive:
+                        msgs.append(f"rm: cannot remove '{fname}': Is a directory")
+                    else:
+                        keys_to_del = [k for k in fs if k == target_path or k.startswith(target_path + "/")]
+                        for k in keys_to_del:
+                            del fs[k]
+                        parent_dir = posixpath.dirname(target_path)
+                        base = posixpath.basename(target_path)
+                        if parent_dir in fs and base in fs[parent_dir]["children"]:
+                            fs[parent_dir]["children"].remove(base)
+                else:
+                    msgs.append(f"rm: cannot remove '{fname}': No such file or directory")
+            return "\n".join(msgs)
+
+        elif cmd == "chmod":
+            if len(args) < 2:
+                return "chmod: usage: chmod <mode> <file>"
             mode_arg = args[0]
             target_file = args[1]
             target_path = resolve_path(target_file)
             if target_path in fs:
                 if "+x" in mode_arg or "+rx" in mode_arg or "+xr" in mode_arg or "u+xr" in mode_arg or "u+rx" in mode_arg or "755" in mode_arg or "777" in mode_arg or mode_arg in ("x", "+x", "u+x"):
                     fs[target_path]["mode"] = "755"
-                    output = ""
                 elif "+r" in mode_arg or "644" in mode_arg or mode_arg in ("r", "+r", "u+r", "444"):
                     fs[target_path]["mode"] = "644"
-                    output = ""
                 elif "-r" in mode_arg or "200" in mode_arg:
                     fs[target_path]["mode"] = "200"
-                    output = ""
                 elif "000" in mode_arg:
                     fs[target_path]["mode"] = "000"
-                    output = ""
                 else:
                     fs[target_path]["mode"] = mode_arg
-                    output = ""
+                return ""
             else:
-                output = f"chmod: cannot access '{target_file}': No such file or directory"
+                return f"chmod: cannot access '{target_file}': No such file or directory"
 
-    elif cmd == "sudo":
-        if len(args) >= 3 and args[0] == "chown":
-            user_target = args[1]
-            file_target = args[2]
-            target_path = resolve_path(file_target)
-            if target_path in fs:
-                fs[target_path]["owner"] = user_target
-                output = ""
-            else:
-                output = f"chown: cannot access '{file_target}': No such file or directory"
-        else:
-            output = f"sudo: {' '.join(args)}: command not found"
-
-    elif cmd == "chown":
-        if len(args) >= 2:
-            user_target = args[0]
-            file_target = args[1]
-            target_path = resolve_path(file_target)
-            if target_path in fs:
-                fs[target_path]["owner"] = user_target
-                output = ""
-            else:
-                output = f"chown: cannot access '{file_target}': No such file or directory"
-        else:
-            output = "chown: usage: chown <user> <file>"
-
-    elif cmd.startswith("./"):
-        script_name = cmd[2:]
-        target_path = resolve_path(script_name)
-        if target_path in fs:
-            mode = fs[target_path].get("mode", "644")
-            is_exec = ("x" in mode or mode in ("755", "777", "111", "755", "775"))
-            if is_exec:
-                script_content = fs[target_path]["content"]
-                script_dir = posixpath.dirname(target_path)
-                created_file = None
-                if "done.txt" in script_content:
-                    created_file = posixpath.join(script_dir, "done.txt")
-                    fs[created_file] = {"type": "file", "owner": username, "mode": "644", "content": "muvaffaqiyatli"}
-                    if "done.txt" not in fs[script_dir]["children"]:
-                        fs[script_dir]["children"].append("done.txt")
-                    output = "Skript ishga tushdi!"
-                elif "result.txt" in script_content:
-                    created_file = posixpath.join(script_dir, "result.txt")
-                    fs[created_file] = {"type": "file", "owner": username, "mode": "644", "content": "Tabriklaymiz, siz oxirgi bosqichga yetdingiz!"}
-                    if "result.txt" not in fs[script_dir]["children"]:
-                        fs[script_dir]["children"].append("result.txt")
-                    output = "SUCCESS: result.txt created!"
+        elif cmd == "sudo":
+            if len(args) >= 3 and args[0] == "chown":
+                user_target = args[1]
+                file_target = args[2]
+                target_path = resolve_path(file_target)
+                if target_path in fs:
+                    fs[target_path]["owner"] = user_target
+                    return ""
                 else:
-                    output = "Execution finished."
+                    return f"chown: cannot access '{file_target}': No such file or directory"
             else:
-                output = f"bash: ./{script_name}: Permission denied"
-        else:
-            output = f"bash: ./{script_name}: No such file or directory"
+                return f"sudo: {' '.join(args)}: command not found"
 
-    elif cmd == "nano":
-        if not args:
-            output = "nano: missing file operand"
-        else:
+        elif cmd == "chown":
+            if len(args) >= 2:
+                user_target = args[0]
+                file_target = args[1]
+                target_path = resolve_path(file_target)
+                if target_path in fs:
+                    fs[target_path]["owner"] = user_target
+                    return ""
+                else:
+                    return f"chown: cannot access '{file_target}': No such file or directory"
+            else:
+                return "chown: usage: chown <user> <file>"
+
+        elif cmd.startswith("./"):
+            script_name = cmd[2:]
+            target_path = resolve_path(script_name)
+            if target_path in fs:
+                mode = fs[target_path].get("mode", "644")
+                is_exec = ("x" in mode or mode in ("755", "777", "111", "775"))
+                if is_exec:
+                    script_content = fs[target_path]["content"]
+                    script_dir = posixpath.dirname(target_path)
+                    if "done.txt" in script_content:
+                        created_file = posixpath.join(script_dir, "done.txt")
+                        fs[created_file] = {"type": "file", "owner": username, "mode": "644", "content": "muvaffaqiyatli"}
+                        if "done.txt" not in fs[script_dir]["children"]:
+                            fs[script_dir]["children"].append("done.txt")
+                        return "Skript ishga tushdi!"
+                    elif "result.txt" in script_content:
+                        created_file = posixpath.join(script_dir, "result.txt")
+                        fs[created_file] = {"type": "file", "owner": username, "mode": "644", "content": "Tabriklaymiz, siz oxirgi bosqichga yetdingiz!"}
+                        if "result.txt" not in fs[script_dir]["children"]:
+                            fs[script_dir]["children"].append("result.txt")
+                        return "SUCCESS: result.txt created!"
+                    else:
+                        return "Execution finished."
+                else:
+                    return f"bash: ./{script_name}: Permission denied"
+            else:
+                return f"bash: ./{script_name}: No such file or directory"
+
+        elif cmd == "nano":
+            if not args:
+                return "nano: missing file operand"
             target_path = resolve_path(args[0])
             content = ""
             if target_path in fs and fs[target_path]["type"] == "file":
                 content = fs[target_path]["content"]
-            return jsonify({
+            return {
                 "action": "open_editor",
                 "path": target_path,
                 "filename": posixpath.basename(target_path),
                 "content": content,
                 "cwd": cwd
-            })
+            }
 
-    elif cmd == "echo":
-        if ">" in raw_cmd:
-            gt_idx = raw_cmd.index(">")
-            echo_part = raw_cmd[:gt_idx]
-            file_dest = raw_cmd[gt_idx + 1:].strip()
-            text = echo_part.replace("echo", "", 1).strip().strip('"').strip("'")
-            target_path = resolve_path(file_dest)
-            parent_dir = posixpath.dirname(target_path)
-            if parent_dir in fs:
-                base = posixpath.basename(target_path)
-                if base not in fs[parent_dir]["children"]:
-                    fs[parent_dir]["children"].append(base)
-                fs[target_path] = {"type": "file", "owner": username, "mode": "644", "content": text}
-                output = ""
-            else:
-                output = f"bash: {file_dest}: No such file or directory"
+        elif cmd == "echo":
+            text = cmd_text.replace("echo", "", 1).strip()
+            if (text.startswith('"') and text.endswith('"')) or (text.startswith("'") and text.endswith("'")):
+                text = text[1:-1]
+            return text
+
         else:
-            text = raw_cmd.replace("echo", "", 1).strip().strip('"').strip("'")
-            output = text
+            return f"bash: {cmd}: command not found"
 
-    else:
-        output = f"bash: {cmd}: command not found"
+    # ── Pipeline & Redirection Execution ──────────────────────────────
+    # 1. Output redirection (> or >>)
+    cmd_body, redirect_target, redirect_append = extract_redirection(raw_cmd)
+
+    # 2. Input redirection (<)
+    cmd_body, in_file = extract_input_redirection(cmd_body)
+    stdin_data = None
+    if in_file:
+        in_path = resolve_path(in_file)
+        if in_path in fs and fs[in_path]["type"] == "file":
+            stdin_data = fs[in_path]["content"]
+        else:
+            return jsonify({"output": f"bash: {in_file}: No such file or directory", "cwd": cwd})
+
+    # 3. Pipeline execution (|)
+    pipeline_stages = split_pipeline(cmd_body)
+    curr_input = stdin_data
+    final_output = ""
+
+    for stage_cmd in pipeline_stages:
+        if not stage_cmd:
+            continue
+        stage_res = run_single_command(stage_cmd, stdin_data=curr_input)
+        if isinstance(stage_res, dict):
+            if stage_res.get("action") == "clear":
+                return jsonify({"output": "__CLEAR__", "cwd": cwd})
+            if stage_res.get("action") == "open_editor":
+                return jsonify(stage_res)
+        curr_input = str(stage_res)
+
+    final_output = curr_input if curr_input is not None else ""
+
+    # 4. Save output redirection to VFS
+    if redirect_target:
+        target_path = resolve_path(redirect_target)
+        parent_dir = posixpath.dirname(target_path)
+        if parent_dir in fs and fs[parent_dir]["type"] == "dir":
+            base = posixpath.basename(target_path)
+            if base not in fs[parent_dir]["children"]:
+                fs[parent_dir]["children"].append(base)
+
+            if redirect_append and target_path in fs:
+                prev_c = fs[target_path]["content"]
+                fs[target_path]["content"] = prev_c + ("\n" if prev_c and not prev_c.endswith("\n") else "") + final_output
+            else:
+                fs[target_path] = {"type": "file", "owner": username, "mode": "644", "content": final_output}
+            final_output = ""
+        else:
+            final_output = f"bash: {redirect_target}: No such file or directory"
 
     db.save_user_vfs(username, fs)
-    return jsonify({"output": output, "cwd": cwd})
+    return jsonify({"output": final_output, "cwd": cwd})
 
 
 if __name__ == "__main__":
