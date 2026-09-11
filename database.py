@@ -20,8 +20,14 @@ class DBWrapper:
             self.conn = psycopg2.connect(DATABASE_URL, cursor_factory=psycopg2.extras.RealDictCursor)
         else:
             import sqlite3
-            self.conn = sqlite3.connect(DB_PATH)
+            self.conn = sqlite3.connect(DB_PATH, timeout=60.0, check_same_thread=False)
             self.conn.row_factory = sqlite3.Row
+            try:
+                self.conn.execute("PRAGMA journal_mode=WAL;")
+                self.conn.execute("PRAGMA synchronous=NORMAL;")
+                self.conn.execute("PRAGMA busy_timeout=60000;")
+            except Exception:
+                pass
 
     def cursor(self):
         return CursorWrapper(self.conn.cursor(), self.is_pg)
@@ -428,14 +434,23 @@ def get_student_ctf_status(username):
     cursor = conn.cursor()
     cursor.execute("SELECT current_stage, ctf1_stage, ctf2_stage, active_ctf FROM progress WHERE username = ?", (username,))
     row = cursor.fetchone()
-    conn.close()
     if not row:
+        conn.close()
         return {"active_ctf": 1, "ctf1_stage": 1, "ctf2_stage": 1, "ctf2_unlocked": False}
-    
-    ctf1 = row.get("ctf1_stage") or row.get("current_stage") or 1
-    ctf2 = row.get("ctf2_stage") or 1
+
+    cursor.execute("SELECT MAX(stage) as max_s FROM attempts WHERE username = ? AND ctf_id = 1 AND result = 'pass'", (username,))
+    max_p1 = cursor.fetchone()
+    pass1_stage = (max_p1["max_s"] + 1) if (max_p1 and max_p1.get("max_s")) else 1
+
+    cursor.execute("SELECT MAX(stage) as max_s FROM attempts WHERE username = ? AND ctf_id = 2 AND result = 'pass'", (username,))
+    max_p2 = cursor.fetchone()
+    pass2_stage = (max_p2["max_s"] + 1) if (max_p2 and max_p2.get("max_s")) else 1
+
+    ctf1 = max(row.get("ctf1_stage") or 1, row.get("current_stage") or 1, pass1_stage)
+    ctf2 = max(row.get("ctf2_stage") or 1, pass2_stage)
     active = row.get("active_ctf") or 1
     unlocked = (ctf1 > 10)
+    conn.close()
     return {
         "active_ctf": active,
         "ctf1_stage": ctf1,
@@ -505,19 +520,21 @@ def get_stage_fail_count(username, stage, ctf=None):
     return row["cnt"] if row else 0
 
 
-def update_student_stage(username, next_stage):
-    status = get_student_ctf_status(username)
+def update_student_stage(username, next_stage, ctf_id=None):
+    if ctf_id is None:
+        status = get_student_ctf_status(username)
+        ctf_id = status["active_ctf"]
     conn = get_db()
     cursor = conn.cursor()
-    if status["active_ctf"] == 2:
+    if ctf_id == 2:
         cursor.execute(
             "UPDATE progress SET ctf2_stage = ?, updated_at = CURRENT_TIMESTAMP WHERE username = ?",
             (next_stage, username)
         )
     else:
         cursor.execute(
-            "UPDATE progress SET ctf1_stage = ?, updated_at = CURRENT_TIMESTAMP WHERE username = ?",
-            (next_stage, username)
+            "UPDATE progress SET ctf1_stage = ?, current_stage = ?, updated_at = CURRENT_TIMESTAMP WHERE username = ?",
+            (next_stage, next_stage, username)
         )
     conn.commit()
     conn.close()
@@ -722,10 +739,49 @@ def get_admin_users():
     """Returns all users with extended stats for admin panel table."""
     conn = get_db()
     cursor = conn.cursor()
+    # Auto-heal progress from attempts if attempts show higher passed stage
+    try:
+        cursor.execute("""
+            UPDATE progress
+            SET ctf1_stage = CASE
+                WHEN (SELECT MAX(a.stage) + 1 FROM attempts a WHERE a.username = progress.username AND a.ctf_id = 1 AND a.result = 'pass') > COALESCE(progress.ctf1_stage, 1)
+                THEN (SELECT MAX(a.stage) + 1 FROM attempts a WHERE a.username = progress.username AND a.ctf_id = 1 AND a.result = 'pass')
+                WHEN COALESCE(progress.current_stage, 1) > COALESCE(progress.ctf1_stage, 1) AND COALESCE(progress.current_stage, 1) <= 11
+                THEN progress.current_stage
+                ELSE COALESCE(progress.ctf1_stage, 1)
+            END,
+            current_stage = CASE
+                WHEN (SELECT MAX(a.stage) + 1 FROM attempts a WHERE a.username = progress.username AND a.ctf_id = 1 AND a.result = 'pass') > COALESCE(progress.current_stage, 1)
+                THEN (SELECT MAX(a.stage) + 1 FROM attempts a WHERE a.username = progress.username AND a.ctf_id = 1 AND a.result = 'pass')
+                WHEN COALESCE(progress.ctf1_stage, 1) > COALESCE(progress.current_stage, 1)
+                THEN progress.ctf1_stage
+                ELSE COALESCE(progress.current_stage, 1)
+            END,
+            ctf2_stage = CASE
+                WHEN (SELECT MAX(a.stage) + 1 FROM attempts a WHERE a.username = progress.username AND a.ctf_id = 2 AND a.result = 'pass') > COALESCE(progress.ctf2_stage, 1)
+                THEN (SELECT MAX(a.stage) + 1 FROM attempts a WHERE a.username = progress.username AND a.ctf_id = 2 AND a.result = 'pass')
+                ELSE COALESCE(progress.ctf2_stage, 1)
+            END;
+        """)
+        conn.commit()
+    except Exception:
+        if conn.is_pg:
+            conn.rollback()
+
     cursor.execute("""
         SELECT u.username, u.created_at as registered_at,
-               COALESCE(p.ctf1_stage, 1) as ctf1_stage,
-               COALESCE(p.ctf2_stage, 1) as ctf2_stage,
+               CASE 
+                   WHEN COALESCE((SELECT MAX(stage)+1 FROM attempts a WHERE a.username = u.username AND a.ctf_id = 1 AND a.result = 'pass'), 1) > COALESCE(p.ctf1_stage, 1)
+                   THEN COALESCE((SELECT MAX(stage)+1 FROM attempts a WHERE a.username = u.username AND a.ctf_id = 1 AND a.result = 'pass'), 1)
+                   WHEN COALESCE(p.current_stage, 1) > COALESCE(p.ctf1_stage, 1) AND COALESCE(p.current_stage, 1) <= 11
+                   THEN COALESCE(p.current_stage, 1)
+                   ELSE COALESCE(p.ctf1_stage, 1)
+               END as ctf1_stage,
+               CASE 
+                   WHEN COALESCE((SELECT MAX(stage)+1 FROM attempts a WHERE a.username = u.username AND a.ctf_id = 2 AND a.result = 'pass'), 1) > COALESCE(p.ctf2_stage, 1)
+                   THEN COALESCE((SELECT MAX(stage)+1 FROM attempts a WHERE a.username = u.username AND a.ctf_id = 2 AND a.result = 'pass'), 1)
+                   ELSE COALESCE(p.ctf2_stage, 1)
+               END as ctf2_stage,
                COALESCE(p.active_ctf, 1) as active_ctf,
                p.updated_at,
                f.flag,
@@ -799,6 +855,13 @@ def get_student_audit_detail(username, quiz_meta_1=None, quiz_meta_2=None):
 
     import datetime
 
+    # Calculate true effective stages from attempts
+    max_p1 = max([a["stage"] for a in raw_attempts if a.get("ctf_id", 1) == 1 and a["result"] == "pass"] or [0])
+    max_p2 = max([a["stage"] for a in raw_attempts if a.get("ctf_id", 1) == 2 and a["result"] == "pass"] or [0])
+
+    eff_ctf1_stage = max(prog.get("ctf1_stage") or 1, (prog.get("current_stage") or 1) if (prog.get("current_stage") or 1) <= 11 else 1, max_p1 + 1)
+    eff_ctf2_stage = max(prog.get("ctf2_stage") or 1, max_p2 + 1)
+
     # Build 20 stage breakdown
     stages_audit = []
 
@@ -810,8 +873,8 @@ def get_student_audit_detail(username, quiz_meta_1=None, quiz_meta_2=None):
         score = score_map.get(key, 1 if att["passes"] > 0 and att["fails"] <= 3 else 0)
         dur = tm.get("duration_seconds", 0)
 
-        is_completed = (prog.get("ctf1_stage") or 1) > s
-        is_current = (prog.get("ctf1_stage") or 1) == s and prog.get("active_ctf", 1) == 1
+        is_completed = (att["passes"] > 0) or (eff_ctf1_stage > s)
+        is_current = not is_completed and (eff_ctf1_stage == s) and (prog.get("active_ctf", 1) == 1)
 
         # Live duration calculation if currently active
         dur_str = "—"
@@ -874,8 +937,8 @@ def get_student_audit_detail(username, quiz_meta_1=None, quiz_meta_2=None):
         score = score_map.get(key, 1 if att["passes"] > 0 and att["fails"] <= 3 else 0)
         dur = tm.get("duration_seconds", 0)
 
-        is_completed = (prog.get("ctf2_stage") or 1) > s
-        is_current = (prog.get("ctf2_stage") or 1) == s and prog.get("active_ctf", 1) == 2
+        is_completed = (att["passes"] > 0) or (eff_ctf2_stage > s)
+        is_current = not is_completed and (eff_ctf2_stage == s) and (prog.get("active_ctf", 1) == 2)
 
         dur_str = "—"
         if is_completed:
