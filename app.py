@@ -4,6 +4,7 @@ import hashlib
 import json
 import string
 import random
+import shlex
 from functools import wraps
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 import database as db
@@ -1941,7 +1942,10 @@ def execute_command():
 
     def run_single_command(cmd_text, stdin_data=None):
         nonlocal cwd, fs
-        parts = cmd_text.split()
+        try:
+            parts = shlex.split(cmd_text)
+        except Exception:
+            parts = cmd_text.split()
         if not parts:
             return ""
         cmd = parts[0]
